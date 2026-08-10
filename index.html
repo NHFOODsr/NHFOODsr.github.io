@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>농협식품 분석 대시보드</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --green: #00873E;
+    --green-dark: #005F2B;
+    --green-light: #E8F5EE;
+    --orange: #E05A00;
+    --bg: #F4F6F9;
+    --white: #ffffff;
+    --text: #1A1A2E;
+    --sub: #6B7280;
+    --shadow: 0 4px 24px rgba(0,0,0,0.09);
+    --shadow-hover: 0 12px 40px rgba(0,0,0,0.16);
+  }
+
+  body {
+    font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', -apple-system, sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  .logo-wrap {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .logo-icon {
+    width: 48px;
+    height: 48px;
+    background: var(--green);
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+  }
+
+  .logo-text {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--green-dark);
+    letter-spacing: -0.5px;
+  }
+
+  .logo-text span {
+    color: var(--green);
+  }
+
+  .subtitle {
+    font-size: 13px;
+    color: var(--sub);
+    margin-bottom: 48px;
+    text-align: center;
+  }
+
+  .cards {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+    max-width: 720px;
+  }
+
+  .card {
+    background: var(--white);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    padding: 40px 36px;
+    flex: 1;
+    min-width: 260px;
+    max-width: 320px;
+    cursor: pointer;
+    text-decoration: none;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 14px;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: 2px solid transparent;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--accent);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .card:hover {
+    transform: translateY(-6px);
+    box-shadow: var(--shadow-hover);
+    border-color: var(--accent);
+  }
+
+  .card:hover::before { opacity: 1; }
+
+  .card.green { --accent: var(--green); }
+  .card.orange { --accent: var(--orange); }
+
+  .card-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin-bottom: 4px;
+  }
+
+  .card.green .card-icon { background: var(--green-light); }
+  .card.orange .card-icon { background: #FFF0E6; }
+
+  .card-title {
+    font-size: 20px;
+    font-weight: 800;
+    color: var(--text);
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+  }
+
+  .card-desc {
+    font-size: 13px;
+    color: var(--sub);
+    line-height: 1.7;
+  }
+
+  .card-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 4px;
+  }
+
+  .tag {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    background: var(--green-light);
+    color: var(--green-dark);
+  }
+
+  .card.orange .tag { background: #FFF0E6; color: var(--orange); }
+
+  .card-arrow {
+    position: absolute;
+    bottom: 28px;
+    right: 28px;
+    font-size: 20px;
+    color: var(--sub);
+    transition: transform 0.2s, color 0.2s;
+  }
+
+  .card:hover .card-arrow {
+    transform: translate(4px, -4px);
+    color: var(--accent);
+  }
+
+  .footer {
+    margin-top: 48px;
+    font-size: 11px;
+    color: #BEC3CC;
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+
+<div class="logo-wrap">
+  <div class="logo-icon">🌾</div>
+  <div class="logo-text"><span>농협식품</span></div>
+</div>
+<p class="subtitle">데이터 분석 대시보드</p>
+
+<div class="cards">
+
+  <a href="./analyzer/" class="card orange">
+    <div class="card-icon">📊</div>
+    <div class="card-title">매출 분석기</div>
+    <div class="card-desc">거래처별·제품별 월간 매출 현황<br>입점매장 및 채널별 실적 분석</div>
+    <div class="card-tags">
+      <span class="tag">월별 매출</span>
+      <span class="tag">거래처</span>
+      <span class="tag">채널분석</span>
+    </div>
+    <div class="card-arrow">↗</div>
+  </a>
+
+  <a href="./new_analyzer/" class="card green">
+    <div class="card-icon">🆕</div>
+    <div class="card-title">신상품 분석기</div>
+    <div class="card-desc">신상품 출시 현황 및 입점 추적<br>판매사업·단순매입 분류 분석</div>
+    <div class="card-tags">
+      <span class="tag">출시현황</span>
+      <span class="tag">입점추적</span>
+      <span class="tag">신상품</span>
+    </div>
+    <div class="card-arrow">↗</div>
+  </a>
+
+</div>
+
+<div class="footer">농협식품 데이터 분석 대시보드</div>
+
+</body>
+</html>
