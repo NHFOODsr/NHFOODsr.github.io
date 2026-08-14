@@ -795,6 +795,17 @@ tr.row-highlight td:first-child { border-left: 3px solid var(--neutral); }
   transition: background 0.15s;
 }
 .update-modal-btn:hover { background: var(--primary-light); }
+
+/* ── PL 탭 스타일 ── */
+.pl-tab-btn { color: var(--accent) !important; font-weight: 700 !important; }
+.pl-mini-btn {
+  display: inline-flex; align-items: center; gap: 3px;
+  padding: 3px 8px; font-size: 10px; font-weight: 600;
+  border: 1px solid var(--accent); border-radius: 12px;
+  background: transparent; color: var(--accent); cursor: pointer;
+  transition: background 0.15s, color 0.15s; white-space: nowrap;
+}
+.pl-mini-btn:hover { background: var(--accent); color: #fff; }
 </style>
 </head>
 <body data-mode="yoy">
@@ -1016,6 +1027,7 @@ tr.row-highlight td:first-child { border-left: 3px solid var(--neutral); }
         <button class="tab-btn" onclick="switchTab('channel')">📦 채널별 상세분석</button>
         <button class="tab-btn" onclick="switchTab('product')">🏷️ 품목별 상세분석</button>
         <button class="tab-btn" onclick="switchTab('store')">🏬 입점매장 분석</button>
+        <button class="tab-btn pl-tab-btn" onclick="switchTab('pl')">📈 손익 분석</button>
         </div>
         <button class="btn-toggle-labels" id="btn-hide-labels" onclick="toggleLabels()">숫자 표기 생략</button>
       </div>
@@ -1151,7 +1163,10 @@ tr.row-highlight td:first-child { border-left: 3px solid var(--neutral); }
           </div>
           <div style="display:flex; flex-direction:column; gap:8px;">
             <div class="chart-card">
-              <h3 id="prod-m-title">월별 품목 상세 분석</h3>
+              <h3 style="display:flex;justify-content:space-between;align-items:center;">
+                <span id="prod-m-title">월별 품목 상세 분석</span>
+                <button class="pl-mini-btn" id="btn-prod-m-pl" onclick="showProdPl('monthly')" title="월별 공헌이익 보기">📈 손익 확인</button>
+              </h3>
               <div class="chart-sub" id="prod-m-sub">← 왼쪽 품목명을 클릭하세요</div>
               <div class="chart-wrap" style="height:180px;"><canvas id="prod-m-chart"></canvas></div>
               <div class="legend">
@@ -1160,13 +1175,39 @@ tr.row-highlight td:first-child { border-left: 3px solid var(--neutral); }
               </div>
             </div>
             <div class="chart-card">
-              <h3 id="prod-c-title">채널별 품목 상세 분석</h3>
+              <h3 style="display:flex;justify-content:space-between;align-items:center;">
+                <span id="prod-c-title">채널별 품목 상세 분석</span>
+                <button class="pl-mini-btn" id="btn-prod-c-pl" onclick="showProdPl('channel')" title="채널별 공헌이익 보기">📈 손익보기</button>
+              </h3>
               <div class="chart-sub" id="prod-c-sub">← 왼쪽 품목명을 클릭하세요</div>
               <div class="chart-wrap" style="height:180px;"><canvas id="prod-c-chart"></canvas></div>
               <div class="legend">
                 <div class="legend-item mode-yoy-only"><div class="legend-swatch" style="background:var(--prev)"></div><span id="prod-c-leg-prev">전년도</span></div>
                 <div class="legend-item"><div class="legend-swatch" style="background:var(--curr)"></div><span id="prod-c-leg-curr">금년도</span></div>
               </div>
+            </div>
+          </div>
+        </div>
+        <!-- 하단 손익 그래프 -->
+        <div class="chart-card" id="prod-pl-card" style="margin-top:8px;display:none;">
+          <h3 style="display:flex;justify-content:space-between;align-items:center;">
+            <span id="prod-pl-title">공헌이익 분석</span>
+            <button class="pl-mini-btn" onclick="document.getElementById('prod-pl-card').style.display='none'" style="background:#e74c3c;">× 닫기</button>
+          </h3>
+          <div id="prod-pl-loading" style="display:none;text-align:center;padding:20px;font-size:12px;color:var(--text-mid);">폴 데이터 로딩 중...</div>
+          <div id="prod-pl-body" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <div>
+              <div class="chart-wrap" style="height:180px;"><canvas id="prod-pl-chart"></canvas></div>
+              <div class="legend" style="margin-top:4px;">
+                <div class="legend-item"><div class="legend-swatch" style="background:rgba(67,97,238,0.75)"></div>공헌이익액(좌)</div>
+                <div class="legend-item"><div class="legend-swatch" style="background:#e63946;height:2px;border-radius:1px;width:20px;"></div>공헌이익률%(우)</div>
+              </div>
+            </div>
+            <div style="overflow-y:auto;max-height:220px;">
+              <table class="data-table" id="prod-pl-table">
+                <thead><tr><th>구분</th><th>공헌이익액</th><th>공헌이익률</th></tr></thead>
+                <tbody id="prod-pl-tbody"></tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -1188,6 +1229,61 @@ tr.row-highlight td:first-child { border-left: 3px solid var(--neutral); }
       </div>
     </div><!-- /result-area -->
 
+
+      <!-- ── Tab 6: 손익 분석 ── -->
+      <div class="tab-pane" id="tab-pl">
+        <div id="pl-loading-msg" style="display:flex;align-items:center;justify-content:center;height:200px;flex-direction:column;gap:12px;">
+          <div style="font-size:28px;">⏳</div>
+          <div style="font-size:13px;color:var(--text-mid);">손익 데이터 로딩 중...<br><small>처음 열 때 약 10초 소요될 수 있습니다</small></div>
+        </div>
+        <div id="pl-main" style="display:none;">
+          <!-- 기간: 사이드바 from-month ~ to-month 자동 사용 -->
+          <div id="pl-period-info" style="display:flex;align-items:center;gap:6px;margin-bottom:8px;padding:5px 10px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);font-size:11px;">
+            <span style="font-weight:600;color:var(--text-mid);">분석 기간</span>
+            <span id="pl-period-lbl" style="color:var(--primary);font-weight:600;"></span>
+            <span style="margin-left:auto;color:var(--text-light);">공헌이익 = 매출액 − (매출원가+수수료+개첩비+개발비+운반비+광고료+용역비+전자상거래수수료)</span>
+          </div>
+          <!-- 차트 2개 나란히 -->
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+            <!-- 왼쪽: 월별 공헌이익 -->
+            <div class="chart-card">
+              <h3>📅 월별 공헌이익 추이</h3>
+              <div class="chart-sub" id="pl-monthly-sub"></div>
+              <div class="chart-wrap" style="height:220px;"><canvas id="pl-monthly-chart"></canvas></div>
+              <div class="legend" style="margin-top:4px;display:flex;flex-wrap:wrap;gap:6px;">
+                <div class="legend-item"><div class="legend-swatch" style="background:rgba(74,144,217,0.5)"></div>전년액(좌)</div>
+                <div class="legend-item"><div class="legend-swatch" style="background:rgba(67,97,238,0.85)"></div>금년액(좌)</div>
+                <div class="legend-item"><div style="width:20px;height:2px;border-top:2px dashed #f4a261;margin:auto 0;"></div>전년율%(우)</div>
+                <div class="legend-item"><div style="width:20px;height:2px;background:#e63946;margin:auto 0;border-radius:1px;"></div>금년율%(우)</div>
+              </div>
+              <div style="margin-top:6px;overflow-x:auto;">
+                <table class="data-table" style="font-size:10px;">
+                  <thead><tr><th>월</th><th>전년공헌액</th><th>금년공헌액</th><th>증감액</th><th>증감률</th><th>전년율</th><th>금년율</th></tr></thead>
+                  <tbody id="pl-monthly-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+            <!-- 오른쪽: 채널별 공헌이익 -->
+            <div class="chart-card">
+              <h3>📦 채널별 공헌이익 비교</h3>
+              <div class="chart-sub" id="pl-channel-sub"></div>
+              <div class="chart-wrap" style="height:220px;"><canvas id="pl-channel-chart"></canvas></div>
+              <div class="legend" style="margin-top:4px;display:flex;flex-wrap:wrap;gap:6px;">
+                <div class="legend-item"><div class="legend-swatch" style="background:rgba(30,184,111,0.4)"></div>전년액(좌)</div>
+                <div class="legend-item"><div class="legend-swatch" style="background:rgba(30,184,111,0.85)"></div>금년액(좌)</div>
+                <div class="legend-item"><div style="width:20px;height:2px;border-top:2px dashed #f4a261;margin:auto 0;"></div>전년율%(우)</div>
+                <div class="legend-item"><div style="width:20px;height:2px;background:#f4a261;margin:auto 0;border-radius:1px;"></div>금년율%(우)</div>
+              </div>
+              <div style="margin-top:6px;overflow-x:auto;">
+                <table class="data-table" style="font-size:10px;">
+                  <thead><tr><th>채널</th><th>전년공헌액</th><th>금년공헌액</th><th>증감액</th><th>증감률</th><th>전년율</th><th>금년율</th></tr></thead>
+                  <tbody id="pl-channel-tbody"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
   </main>
 </div><!-- /layout -->
 
@@ -1603,6 +1699,10 @@ function updateYearHeaders(py, cy, toM) {
 function checkAnalyzeReady() {
   const btn = document.getElementById('btn-analyze');
   btn.disabled = !(state.prevRows && state.currRows);
+  // 두 파일 로드 시 PL 데이터 백그라운드 프리로드
+  if (state.prevRows && state.currRows && !plState.loaded && !plState.loading) {
+    setTimeout(function() { _fetchAndParsePl(); }, 500);
+  }
 }
 
 // ─────────────────────────────────────────────────
@@ -2167,7 +2267,7 @@ function toggleLabels() {
   }
 }
 function switchTab(name) {
-  const names = ['dashboard', 'monthly', 'channel', 'product', 'store'];
+  const names = ['dashboard', 'monthly', 'channel', 'product', 'store', 'pl'];
   document.querySelectorAll('.tab-btn').forEach((btn, i) => {
     btn.classList.toggle('active', names[i] === name);
   });
@@ -2175,6 +2275,7 @@ function switchTab(name) {
     pane.classList.toggle('active', pane.id === 'tab-' + name);
   });
   if (name === 'store') renderStoreTab();
+  if (name === 'pl') initPlTab();
 }
 
 // ─────────────────────────────────────────────────
@@ -3074,6 +3175,468 @@ function closeUpdateModal() {
 startupLoad();
 fetchStoreMap();
 checkUpdateModal();
+
+// ═══════════════════════════════════════════════════════════════
+// 손익(PL) 분석 로직 - 전년대비 비교
+// ═══════════════════════════════════════════════════════════════
+const plState = {
+  loaded: false, loading: false,
+  monthly: {}, // {yr: {mon: {rev, cost}}}
+  channel: {}, // {yr: {ch: {rev, cost}}}
+  years: []
+};
+
+const PL_REVENUE = '01. 매출액';
+const PL_CONTRIB_COSTS = [
+  '02. 매출원가', '03. 지급수수료', '04. 시장개첩비',
+  '05. 시험개발비', '06. 운반비', '07. 선전광고료',
+  '08. 용역비', '09. 전자상거래지급수수료'
+];
+
+function plFmt(v) {
+  if (Math.abs(v) >= 1e8) return (v/1e8).toFixed(1) + '억';
+  if (Math.abs(v) >= 1e6) return (v/1e6).toFixed(1) + '백만';
+  return Math.round(v).toLocaleString();
+}
+function plFmtM(v) { return (v/1e6).toFixed(1); }
+function plPct(rev, contrib) { return (rev && rev !== 0) ? contrib / rev * 100 : 0; }
+function plDiffRate(prev, curr) {
+  if (!prev || prev === 0) return curr > 0 ? 100 : 0;
+  return (curr - prev) / Math.abs(prev) * 100;
+}
+function plAmtColor(v) { return v >= 0 ? 'var(--curr,#1eb86f)' : '#e74c3c'; }
+
+// 사이드바 기간 읽기
+function getPlPeriod() {
+  const fromEl = document.getElementById('from-month');
+  const fromM = fromEl ? parseInt(fromEl.value) : 1;
+  const currYr = state.currYear || '';
+  const prevYr = state.prevYear || '';
+  // 금년 데이터의 실제 마지막 월 자동 감지 (미래월 제외)
+  const currMonths = Object.keys(plState.monthly[currYr] || {}).map(Number).filter(m => m >= fromM);
+  const autoToM = currMonths.length ? Math.max.apply(null, currMonths) : 6;
+  return { fromM, toM: autoToM, currYr, prevYr };
+}
+
+// 실제 파싱 로직 (UI 없음 - 백그라운드에서도 호출 가능)
+const PL_CACHE_KEY = 'plDataCache_v2';
+async function _fetchAndParsePl() {
+  if (plState.loaded || plState.loading) return plState.loaded;
+  // sessionStorage 캐시 확인 (소요시간 ~0.1초)
+  try {
+    const cached = sessionStorage.getItem(PL_CACHE_KEY);
+    if (cached) {
+      const d = JSON.parse(cached);
+      if (d && d.monthly && d.chMonthly && d.years) {
+        plState.monthly = d.monthly;
+        plState.chMonthly = d.chMonthly;
+        plState.years = d.years;
+        plState.loaded = true;
+        console.log('[PL] 캐시 로드 성공');
+        return true;
+      }
+    }
+  } catch(e) { console.log('[PL] 캐시 없음, 새로 파싱'); }
+
+  plState.loading = true;
+  try {
+    const resp = await fetch('/pl_default.xlsx');
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const buf = await resp.arrayBuffer();
+    const zip = await JSZip.loadAsync(buf);
+    const minStyles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
+  <fonts count="1"><font/></fonts>
+  <fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>
+  <borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>
+  <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
+  <cellXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/></cellXfs>
+</styleSheet>`;
+    if (zip.file('xl/styles.xml')) zip.file('xl/styles.xml', minStyles);
+    const fixedBuf = await zip.generateAsync({ type: 'arraybuffer' });
+    const wb = XLSX.read(new Uint8Array(fixedBuf), { type: 'array', cellStyles: false, sheets: ['누적Data'] });
+    const ws = wb.Sheets['누적Data'];
+    if (!ws) throw new Error('누적Data 시트 없음');
+    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
+    parsePlRows(rows);
+    plState.loaded = true;
+    // sessionStorage에 파싱 결과 캐시
+    try {
+      sessionStorage.setItem(PL_CACHE_KEY, JSON.stringify({
+        monthly: plState.monthly, chMonthly: plState.chMonthly, years: plState.years
+      }));
+      console.log('[PL] 캐시 저장 완료');
+    } catch(e2) { console.log('[PL] 캐시 저장 실패 (용량 초과)'); }
+    return true;
+  } catch(e) {
+    console.error('[PL] 로드 실패', e);
+    return false;
+  } finally { plState.loading = false; }
+}
+
+async function initPlTab() {
+  if (plState.loading) {
+    // 프리로딩 중이면 대기
+    document.getElementById('pl-loading-msg').style.display = 'flex';
+    document.getElementById('pl-main').style.display = 'none';
+    while (plState.loading) await new Promise(function(r){ setTimeout(r, 80); });
+  }
+  if (!plState.loaded) {
+    document.getElementById('pl-loading-msg').style.display = 'flex';
+    document.getElementById('pl-main').style.display = 'none';
+    const ok = await _fetchAndParsePl();
+    if (!ok) {
+      document.getElementById('pl-loading-msg').innerHTML =
+        '<div style="color:#e74c3c;font-size:13px;">❌ PL 데이터 로드 실패</div>';
+      return;
+    }
+  }
+  document.getElementById('pl-loading-msg').style.display = 'none';
+  document.getElementById('pl-main').style.display = 'block';
+  renderPlTab();
+}
+
+function parsePlRows(rows) {
+  let dataStart = 2;
+  for (let i = 0; i < Math.min(5, rows.length); i++) {
+    if (rows[i] && String(rows[i][0]).trim() === '연도') { dataStart = i + 1; break; }
+  }
+  const monthly = {}, chMonthly = {}, yearSet = new Set();
+  for (let i = dataStart; i < rows.length; i++) {
+    const row = rows[i];
+    if (!row || row[0] == null) continue;
+    const yr = String(Math.floor(Number(row[0]))).trim();
+    if (!/^\d{4}$/.test(yr)) continue;
+    const mon = parseInt(String(row[1] || '').trim(), 10);
+    if (!mon || mon < 1 || mon > 12) continue;
+    const ch = (row[2] || '').toString().trim() || '미분류';
+    const acct = (row[8] || '').toString().trim();
+    const amt = Number(row[7]) || 0;
+    if (!acct) continue;
+    yearSet.add(yr);
+    // 월별 집계
+    if (!monthly[yr]) monthly[yr] = {};
+    if (!monthly[yr][mon]) monthly[yr][mon] = { rev: 0, cost: 0 };
+    // 채널x월 집계 (동일월 필터링용)
+    if (!chMonthly[yr]) chMonthly[yr] = {};
+    if (!chMonthly[yr][mon]) chMonthly[yr][mon] = {};
+    if (!chMonthly[yr][mon][ch]) chMonthly[yr][mon][ch] = { rev: 0, cost: 0 };
+    if (acct === PL_REVENUE) {
+      monthly[yr][mon].rev += amt;
+      chMonthly[yr][mon][ch].rev += amt;
+    } else if (PL_CONTRIB_COSTS.includes(acct)) {
+      monthly[yr][mon].cost += amt;
+      chMonthly[yr][mon][ch].cost += amt;
+    }
+  }
+  plState.monthly = monthly;
+  plState.chMonthly = chMonthly;
+  plState.years = [...yearSet].filter(y => /^\d{4}$/.test(y)).sort().reverse();
+}
+
+function renderPlTab() {
+  const { fromM, toM, currYr, prevYr } = getPlPeriod();
+  const lbl = document.getElementById('pl-period-lbl');
+  if (lbl) {
+    if (currYr && prevYr) {
+      lbl.textContent = prevYr + '→' + currYr + '년   ' + fromM + '~' + toM + '월';
+    } else {
+      lbl.textContent = '분석 데이터를 먼저 로드하세요';
+    }
+  }
+  renderPlMonthly(currYr, prevYr, fromM, toM);
+  renderPlChannel(currYr, prevYr, fromM, toM);
+}
+
+// 전년대비 콤보 차트 (바x2 + 라x2, 이중축)
+function buildYoyComboChart(canvasId, labels, prevAmts, currAmts, prevPcts, currPcts, barPrev, barCurr, linePrev, lineCurr) {
+  const ctx = document.getElementById(canvasId);
+  if (!ctx) return null;
+  if (ctx._plChart) { ctx._plChart.destroy(); ctx._plChart = null; }
+  if (!labels.length) {
+    // 데이터 없으면 비움
+    const parent = ctx.parentElement;
+    if (parent) {
+      const msg = parent.querySelector('.pl-nodata');
+      if (!msg) {
+        const d = document.createElement('div');
+        d.className = 'pl-nodata';
+        d.style.cssText = 'text-align:center;padding:30px;font-size:12px;color:var(--text-light);';
+        d.textContent = '해당 기간에 데이터 없음';
+        parent.appendChild(d);
+      }
+    }
+    return null;
+  }
+  ctx._plChart = new Chart(ctx, {
+    data: {
+      labels,
+      datasets: [
+        // 전년(order:1) 왜쪽 / 금년(order:2) 오른쪽 — Chart.js는 order 오름차순 정렬후 그룹 위치 결정
+        { type:'bar', label:'전년 공헌이익액', data:prevAmts, backgroundColor:barPrev, yAxisID:'y', order:1, borderRadius:2 },
+        { type:'bar', label:'금년 공헌이익액', data:currAmts, backgroundColor:barCurr, yAxisID:'y', order:2, borderRadius:2 },
+        { type:'line', label:'전년 공헌이익율%', data:prevPcts, borderColor:linePrev,
+          borderDash:[5,3], backgroundColor:'transparent', yAxisID:'y2',
+          tension:0.3, pointRadius:3, pointBackgroundColor:linePrev, fill:false, order:3,
+          spanGaps:false },
+        { type:'line', label:'금년 공헌이익율%', data:currPcts, borderColor:lineCurr,
+          backgroundColor:'transparent', yAxisID:'y2',
+          tension:0.3, pointRadius:4, pointBackgroundColor:lineCurr, fill:false, order:4,
+          spanGaps:false }
+      ]
+    },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins: {
+        legend:{ display:false },
+        tooltip:{ callbacks:{
+          label: function(c) {
+            return c.dataset.yAxisID === 'y2'
+              ? c.dataset.label + ': ' + (c.parsed.y||0).toFixed(1) + '%'
+              : c.dataset.label + ': ' + Math.round(c.parsed.y||0).toLocaleString() + '백만원';
+          }
+        }}
+      },
+      scales: {
+        y: { position:'left', grid:{color:'rgba(0,0,0,0.05)'},
+          ticks:{ font:{size:9}, callback: function(v) {
+            return Math.abs(v) >= 10000 ? (v/10000).toFixed(0)+'억' : v.toLocaleString();
+          }}
+        },
+        y2: { position:'right', grid:{drawOnChartArea:false},
+          ticks:{ font:{size:9}, callback: function(v) { return v.toFixed(1)+'%'; } }
+        },
+        x: { ticks:{ font:{size:9} } }
+      }
+    }
+  });
+  return ctx._plChart;
+}
+
+function renderPlMonthly(currYr, prevYr, fromM, toM) {
+  const cm = plState.monthly[currYr] || {};
+  const pm = plState.monthly[prevYr] || {};
+  const labels=[], prevAmts=[], currAmts=[], prevPcts=[], currPcts=[], rows=[];
+  let spRev=0, scRev=0, spContrib=0, scContrib=0;
+
+  for (let m = fromM; m <= toM; m++) {
+    const cd = cm[m]; const pd = pm[m];
+    // 전년도 데이터도 없으면 해당 월 자체를 스킵
+    if (!pd && !cd) continue;
+    const pRev = pd ? pd.rev : 0, pCost = pd ? pd.cost : 0;
+    const cRev = cd ? cd.rev : 0, cCost = cd ? cd.cost : 0;
+    const pC = pRev - pCost, cC = cRev - cCost;
+    labels.push(m + '월');
+    // 전년: 언제나 표시 / 금년: 데이터 없으면 null (미래월 공란)
+    prevAmts.push(pd ? Math.round(pC/1e6) : null);
+    currAmts.push(cd ? Math.round(cC/1e6) : null);
+    prevPcts.push(pd ? parseFloat(plPct(pRev, pC).toFixed(1)) : null);
+    currPcts.push(cd ? parseFloat(plPct(cRev, cC).toFixed(1)) : null);
+    // 누계 합산은 실제 데이터 있는 월만
+    if (pd) { spRev += pRev; spContrib += pC; }
+    if (cd) { scRev += cRev; scContrib += cC; }
+    rows.push({ label:m+'월', pC: pd?pC:null, cC: cd?cC:null,
+      diff: (pd && cd) ? cC-pC : null,
+      diffRate: (pd && cd) ? plDiffRate(pC, cC) : null,
+      pPct: pd ? plPct(pRev,pC) : null, cPct: cd ? plPct(cRev,cC) : null });
+  }
+
+  buildYoyComboChart('pl-monthly-chart', labels, prevAmts, currAmts, prevPcts, currPcts,
+    'rgba(74,144,217,0.5)', 'rgba(67,97,238,0.85)', '#bbb', '#e63946');
+
+  const sub = document.getElementById('pl-monthly-sub');
+  if (sub) {
+    if (!labels.length) {
+      sub.textContent = '해당 기간에 데이터 없음';
+    } else {
+      const td = scContrib - spContrib;
+      const tr = plDiffRate(spContrib, scContrib);
+      var periodLabel = fromM === toM ? fromM+'월' : fromM+'~'+toM+'월 누계';
+      sub.innerHTML = '동일월 기준 ' + periodLabel +
+        ' | 전년(' + (prevYr||'?') + ') ' + plFmt(spContrib) +
+        ' → 금년(' + (currYr||'?') + ') ' + plFmt(scContrib) +
+        ' <span style="color:' + plAmtColor(td) + ';font-weight:600;margin-left:4px;">(' +
+        (td>=0?'+':'') + plFmt(td) + ' / ' + (tr>=0?'+':'') + tr.toFixed(1) + '%)</span>';
+    }
+  }
+
+  const tbody = document.getElementById('pl-monthly-tbody');
+  if (tbody) {
+    const all = rows.length ? [...rows, { label:'합계', pC:spContrib, cC:scContrib,
+      diff:scContrib-spContrib, diffRate:plDiffRate(spContrib,scContrib),
+      pPct:plPct(spRev,spContrib), cPct:plPct(scRev,scContrib), bold:true }] : [];
+    tbody.innerHTML = all.map(function(r) {
+      const s = r.bold ? 'font-weight:700;background:var(--bg);' : '';
+      const dc = r.diff != null ? plAmtColor(r.diff) : '#aaa';
+      const na = '<span style="color:#ccc">-</span>';
+      return '<tr style="' + s + '">' +
+        '<td>' + r.label + '</td>' +
+        '<td style="text-align:right">' + (r.pC != null ? plFmtM(r.pC) : na) + '</td>' +
+        '<td style="text-align:right;color:' + (r.cC!=null?plAmtColor(r.cC):'#aaa') + ';font-weight:600">' + (r.cC != null ? plFmtM(r.cC) : na) + '</td>' +
+        '<td style="text-align:right;color:' + dc + '">' + (r.diff != null ? (r.diff>=0?'+':'') + plFmtM(r.diff) : na) + '</td>' +
+        '<td style="text-align:right;color:' + (r.diffRate!=null?plAmtColor(r.diffRate):'#aaa') + '">' + (r.diffRate != null ? (r.diffRate>=0?'+':'') + r.diffRate.toFixed(1) + '%' : na) + '</td>' +
+        '<td style="text-align:right;color:var(--text-mid)">' + (r.pPct != null ? r.pPct.toFixed(1) + '%' : na) + '</td>' +
+        '<td style="text-align:right;font-weight:600">' + (r.cPct != null ? r.cPct.toFixed(1) + '%' : na) + '</td>' +
+      '</tr>';
+    }).join('');
+  }
+}
+
+function renderPlChannel(currYr, prevYr, fromM, toM) {
+  // 동일월 기준: fromM~toM 범위만 집계
+  const cc = {}, pc = {};
+  for (let m = fromM; m <= toM; m++) {
+    const cMon = ((plState.chMonthly[currYr] || {})[m]) || {};
+    const pMon = ((plState.chMonthly[prevYr] || {})[m]) || {};
+    Object.keys(cMon).forEach(function(ch) {
+      if (!cc[ch]) cc[ch] = {rev:0, cost:0};
+      cc[ch].rev += cMon[ch].rev; cc[ch].cost += cMon[ch].cost;
+    });
+    Object.keys(pMon).forEach(function(ch) {
+      if (!pc[ch]) pc[ch] = {rev:0, cost:0};
+      pc[ch].rev += pMon[ch].rev; pc[ch].cost += pMon[ch].cost;
+    });
+  }
+  const allChs = [...new Set([...Object.keys(cc), ...Object.keys(pc)])];
+  const entries = allChs.map(function(ch) {
+    const cd = cc[ch]||{rev:0,cost:0}, pd = pc[ch]||{rev:0,cost:0};
+    const pC = pd.rev - pd.cost, cC = cd.rev - cd.cost;
+    return { ch, pRev:pd.rev, cRev:cd.rev, pC, cC,
+      diff:cC-pC, diffRate:plDiffRate(pC,cC),
+      pPct:plPct(pd.rev,pC), cPct:plPct(cd.rev,cC) };
+  }).filter(function(e){ return e.pRev||e.cRev; })
+    .sort(function(a,b){ return b.cC - a.cC; });
+
+  buildYoyComboChart('pl-channel-chart',
+    entries.map(function(e){return e.ch;}),
+    entries.map(function(e){return Math.round(e.pC/1e6);}),
+    entries.map(function(e){return Math.round(e.cC/1e6);}),
+    entries.map(function(e){return parseFloat(e.pPct.toFixed(1));}),
+    entries.map(function(e){return parseFloat(e.cPct.toFixed(1));}),
+    'rgba(30,184,111,0.4)', 'rgba(30,184,111,0.85)', '#ccc', '#f4a261');
+
+  const spRev = entries.reduce(function(s,e){return s+e.pRev;},0);
+  const scRev = entries.reduce(function(s,e){return s+e.cRev;},0);
+  const sp = entries.reduce(function(s,e){return s+e.pC;},0);
+  const sc = entries.reduce(function(s,e){return s+e.cC;},0);
+  const td = sc - sp, tr2 = plDiffRate(sp, sc);
+
+  const sub = document.getElementById('pl-channel-sub');
+  if (sub) {
+    if (!entries.length) {
+      sub.textContent = '해당 기간에 데이터 없음';
+    } else {
+      var cPeriodLabel = fromM === toM ? fromM+'월' : fromM+'~'+toM+'월 동일월 누계';
+      sub.innerHTML = cPeriodLabel + ' | 채널 ' + entries.length + '개' +
+        ' | 전년(' + (prevYr||'?') + ') ' + plFmt(sp) +
+        ' → 금년(' + (currYr||'?') + ') ' + plFmt(sc) +
+        ' <span style="color:' + plAmtColor(td) + ';font-weight:600;margin-left:4px;">(' +
+        (td>=0?'+':'') + plFmt(td) + ' / ' + (tr2>=0?'+':'') + tr2.toFixed(1) + '%)</span>';
+    }
+  }
+
+  const tbody = document.getElementById('pl-channel-tbody');
+  if (tbody) {
+    const all = entries.length ? [...entries, { ch:'합계', pC:sp, cC:sc,
+      diff:td, diffRate:tr2, pPct:plPct(spRev,sp), cPct:plPct(scRev,sc), bold:true }] : [];
+    tbody.innerHTML = all.map(function(r) {
+      const s = r.bold ? 'font-weight:700;background:var(--bg);' : '';
+      const dc = plAmtColor(r.diff);
+      return '<tr style="' + s + '">' +
+        '<td>' + (r.ch||r.label) + '</td>' +
+        '<td style="text-align:right">' + plFmtM(r.pC) + '</td>' +
+        '<td style="text-align:right;color:' + plAmtColor(r.cC) + ';font-weight:600">' + plFmtM(r.cC) + '</td>' +
+        '<td style="text-align:right;color:' + dc + '">' + (r.diff>=0?'+':'') + plFmtM(r.diff) + '</td>' +
+        '<td style="text-align:right;color:' + plAmtColor(r.diffRate) + '">' + (r.diffRate>=0?'+':'') + r.diffRate.toFixed(1) + '%</td>' +
+        '<td style="text-align:right;color:var(--text-mid)">' + r.pPct.toFixed(1) + '%</td>' +
+        '<td style="text-align:right;font-weight:600">' + r.cPct.toFixed(1) + '%</td>' +
+      '</tr>';
+    }).join('');
+  }
+}
+
+// 품목별 탭 손익 버튼
+function showProdPl(mode) {
+  const card = document.getElementById('prod-pl-card');
+  if (!card) return;
+  card.style.display = 'block';
+  card.scrollIntoView({ behavior:'smooth', block:'nearest' });
+  if (!plState.loaded) {
+    document.getElementById('prod-pl-loading').style.display = 'block';
+    document.getElementById('prod-pl-body').style.display = 'none';
+    initPlTab().then(function() {
+      document.getElementById('prod-pl-loading').style.display = 'none';
+      document.getElementById('prod-pl-body').style.display = 'grid';
+      renderProdPlChart(mode);
+    });
+  } else {
+    document.getElementById('prod-pl-loading').style.display = 'none';
+    document.getElementById('prod-pl-body').style.display = 'grid';
+    renderProdPlChart(mode);
+  }
+}
+
+function renderProdPlChart(mode) {
+  const { fromM, toM, currYr, prevYr } = getPlPeriod();
+  const titleEl = document.getElementById('prod-pl-title');
+  const cm = plState.monthly[currYr] || {};
+  const pm = plState.monthly[prevYr] || {};
+  const cc = plState.channel[currYr] || {};
+  const pc2 = plState.channel[prevYr] || {};
+
+  if (mode === 'monthly') {
+    if (titleEl) titleEl.textContent = '📅 월별 공헌이익 전년대비 (' + (prevYr||'?') + '→' + (currYr||'?') + '년)';
+    const labels=[], pA=[], cA=[], pP=[], cP=[], rows=[];
+    let sp=0, sc=0, spR=0, scR=0;
+    for (let m=fromM; m<=toM; m++) {
+      const cd=cm[m]||{rev:0,cost:0}, pd=pm[m]||{rev:0,cost:0};
+      if (!cd.rev && !pd.rev) continue;
+      const pC=pd.rev-pd.cost, cC=cd.rev-cd.cost;
+      labels.push(m+'월'); pA.push(Math.round(pC/1e6)); cA.push(Math.round(cC/1e6));
+      pP.push(parseFloat(plPct(pd.rev,pC).toFixed(1))); cP.push(parseFloat(plPct(cd.rev,cC).toFixed(1)));
+      rows.push({ label:m+'월', pC, cC, diff:cC-pC, diffRate:plDiffRate(pC,cC), pPct:plPct(pd.rev,pC), cPct:plPct(cd.rev,cC) });
+      sp+=pC; sc+=cC; spR+=pd.rev; scR+=cd.rev;
+    }
+    buildYoyComboChart('prod-pl-chart', labels, pA, cA, pP, cP,
+      'rgba(74,144,217,0.5)', 'rgba(67,97,238,0.85)', '#bbb', '#e63946');
+    buildPlTable('prod-pl-tbody', rows, sp, sc);
+  } else {
+    if (titleEl) titleEl.textContent = '📦 채널별 공헌이익 전년대비 (' + (prevYr||'?') + '→' + (currYr||'?') + '년)';
+    const allChs = [...new Set([...Object.keys(cc), ...Object.keys(pc2)])];
+    const entries = allChs.map(function(ch) {
+      const cd=cc[ch]||{rev:0,cost:0}, pd=pc2[ch]||{rev:0,cost:0};
+      const pC=pd.rev-pd.cost, cC=cd.rev-cd.cost;
+      return { label:ch, pC, cC, diff:cC-pC, diffRate:plDiffRate(pC,cC), pPct:plPct(pd.rev,pC), cPct:plPct(cd.rev,cC) };
+    }).filter(function(e){return e.pC||e.cC;}).sort(function(a,b){return b.cC-a.cC;});
+    buildYoyComboChart('prod-pl-chart', entries.map(function(e){return e.label;}),
+      entries.map(function(e){return Math.round(e.pC/1e6);}),
+      entries.map(function(e){return Math.round(e.cC/1e6);}),
+      entries.map(function(e){return parseFloat(e.pPct.toFixed(1));}),
+      entries.map(function(e){return parseFloat(e.cPct.toFixed(1));}),
+      'rgba(30,184,111,0.4)', 'rgba(30,184,111,0.85)', '#ccc', '#f4a261');
+    buildPlTable('prod-pl-tbody', entries,
+      entries.reduce(function(s,e){return s+e.pC;},0),
+      entries.reduce(function(s,e){return s+e.cC;},0));
+  }
+}
+
+function buildPlTable(tbodyId, rows, sumPrev, sumCurr) {
+  const tbody = document.getElementById(tbodyId);
+  if (!tbody) return;
+  const all = rows.length ? [...rows, { label:'합계', pC:sumPrev, cC:sumCurr,
+    diff:sumCurr-sumPrev, diffRate:plDiffRate(sumPrev,sumCurr), bold:true }] : [];
+  tbody.innerHTML = all.map(function(r) {
+    const s = r.bold ? 'font-weight:700;background:var(--bg);' : '';
+    const dc = plAmtColor(r.diff);
+    return '<tr style="' + s + '">' +
+      '<td>' + r.label + '</td>' +
+      '<td style="text-align:right;color:' + plAmtColor(r.cC) + ';font-weight:600">' + plFmtM(r.cC) + '</td>' +
+      '<td style="text-align:right;color:' + dc + '">' + (r.diff>=0?'+':'') + plFmtM(r.diff) + '</td>' +
+      '<td style="text-align:right;color:' + plAmtColor(r.diffRate) + '">' + (r.diffRate>=0?'+':'') + r.diffRate.toFixed(1) + '%</td>' +
+    '</tr>';
+  }).join('');
+}
+
 </script>
 </body>
 </html>
