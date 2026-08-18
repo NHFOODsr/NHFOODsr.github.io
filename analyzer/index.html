@@ -404,6 +404,7 @@ body[data-mode="yoy"] .kpi-row {
   padding: 10px 12px;
   box-shadow: var(--shadow);
   border: 1px solid var(--border-light);
+  min-width: 0; /* grid/flex 자식이 컨테이너 밖으로 넘치지 않도록 */
 }
 .chart-card h3 {
   font-size: 12px;
@@ -827,8 +828,8 @@ tr.row-highlight td:first-child { border-left: 3px solid var(--neutral); }
 <!-- ── 앱 전환 탭 바 ── -->
 <div style="background:#1B3D6F;display:flex;align-items:flex-end;padding:0 16px;gap:2px;height:34px;flex-shrink:0">
   <a href="../" style="display:flex;align-items:center;gap:6px;padding:0 14px;height:28px;border-radius:5px 5px 0 0;font-size:12px;font-weight:600;cursor:pointer;text-decoration:none;background:rgba(255,255,255,0.12);color:rgba(255,255,255,0.70);margin-right:6px;font-family:inherit">🌾 홈</a>
-  <a href="../analyzer/" style="display:flex;align-items:center;gap:6px;padding:0 16px;height:28px;border-radius:5px 5px 0 0;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none;background:#EBF0F7;color:#1B3D6F;font-family:inherit">📊 매출 분석기</a>
-  <a href="../new_analyzer/" style="display:flex;align-items:center;gap:6px;padding:0 16px;height:28px;border-radius:5px 5px 0 0;font-size:12px;font-weight:600;cursor:pointer;text-decoration:none;background:rgba(255,255,255,0.10);color:rgba(255,255,255,0.60);font-family:inherit">✨ 신상품 분석기</a>
+  <a href="https://nhfood-analyzer.surge.sh/" style="display:flex;align-items:center;gap:6px;padding:0 16px;height:28px;border-radius:5px 5px 0 0;font-size:12px;font-weight:700;cursor:pointer;text-decoration:none;background:#EBF0F7;color:#1B3D6F;font-family:inherit">📊 매출 분석기</a>
+  <a href="https://nhfood-shinproduct.surge.sh/" style="display:flex;align-items:center;gap:6px;padding:0 16px;height:28px;border-radius:5px 5px 0 0;font-size:12px;font-weight:600;cursor:pointer;text-decoration:none;background:rgba(255,255,255,0.10);color:rgba(255,255,255,0.60);font-family:inherit">✨ 신상품 분석기</a>
 </div>
 <header>
   <div class="logo">
@@ -1237,49 +1238,66 @@ tr.row-highlight td:first-child { border-left: 3px solid var(--neutral); }
           <div style="font-size:13px;color:var(--text-mid);">손익 데이터 로딩 중...<br><small>처음 열 때 약 10초 소요될 수 있습니다</small></div>
         </div>
         <div id="pl-main" style="display:none;">
-          <!-- 기간: 사이드바 from-month ~ to-month 자동 사용 -->
+          <!-- 기간 정보 바 -->
           <div id="pl-period-info" style="display:flex;align-items:center;gap:6px;margin-bottom:8px;padding:5px 10px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);font-size:11px;">
-            <span style="font-weight:600;color:var(--text-mid);">분석 기간</span>
+            <span style="font-weight:600;color:var(--text-mid);">분析 기간</span>
             <span id="pl-period-lbl" style="color:var(--primary);font-weight:600;"></span>
             <span style="margin-left:auto;color:var(--text-light);">공헌이익 = 매출액 − (매출원가+수수료+개첩비+개발비+운반비+광고료+용역비+전자상거래수수료)</span>
           </div>
-          <!-- 차트 2개 나란히 -->
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-            <!-- 왼쪽: 월별 공헌이익 -->
-            <div class="chart-card">
-              <h3>📅 월별 공헌이익 추이</h3>
-              <div class="chart-sub" id="pl-monthly-sub"></div>
-              <div class="chart-wrap" style="height:220px;"><canvas id="pl-monthly-chart"></canvas></div>
-              <div class="legend" style="margin-top:4px;display:flex;flex-wrap:wrap;gap:6px;">
-                <div class="legend-item"><div class="legend-swatch" style="background:rgba(74,144,217,0.5)"></div>전년액(좌)</div>
-                <div class="legend-item"><div class="legend-swatch" style="background:rgba(67,97,238,0.85)"></div>금년액(좌)</div>
-                <div class="legend-item"><div style="width:20px;height:2px;border-top:2px dashed #f4a261;margin:auto 0;"></div>전년율%(우)</div>
-                <div class="legend-item"><div style="width:20px;height:2px;background:#e63946;margin:auto 0;border-radius:1px;"></div>금년율%(우)</div>
-              </div>
-              <div style="margin-top:6px;overflow-x:auto;">
-                <table class="data-table" style="font-size:10px;">
-                  <thead><tr><th>월</th><th>전년공헌액</th><th>금년공헌액</th><th>증감액</th><th>증감률</th><th>전년율</th><th>금년율</th></tr></thead>
-                  <tbody id="pl-monthly-tbody"></tbody>
-                </table>
-              </div>
+          <!-- 월별 손익 표 -->
+          <div class="chart-card" style="margin-bottom:8px;">
+            <h3>📅 월별 손익 현황</h3>
+            <div style="overflow-x:auto;margin-top:6px;">
+              <table class="data-table" style="font-size:11px;min-width:600px;width:100%;">
+                <thead>
+                  <tr>
+                    <th rowspan="2" style="vertical-align:middle;">월</th>
+                    <th colspan="3" style="text-align:center;background:rgba(67,97,238,0.08);">매출액</th>
+                    <th colspan="3" style="text-align:center;background:rgba(30,184,111,0.08);">공헌이익액</th>
+                    <th colspan="3" style="text-align:center;background:rgba(244,162,97,0.12);">공헌이익율</th>
+                  </tr>
+                  <tr>
+                    <th style="background:rgba(67,97,238,0.05);">금년</th>
+                    <th style="background:rgba(67,97,238,0.05);color:var(--text-mid);">전년</th>
+                    <th style="background:rgba(67,97,238,0.05);">성장율</th>
+                    <th style="background:rgba(30,184,111,0.05);">금년</th>
+                    <th style="background:rgba(30,184,111,0.05);color:var(--text-mid);">전년</th>
+                    <th style="background:rgba(30,184,111,0.05);">증감액</th>
+                    <th style="background:rgba(244,162,97,0.08);">금년</th>
+                    <th style="background:rgba(244,162,97,0.08);color:var(--text-mid);">전년</th>
+                    <th style="background:rgba(244,162,97,0.08);">증감</th>
+                  </tr>
+                </thead>
+                <tbody id="pl-monthly-tbody"></tbody>
+              </table>
             </div>
-            <!-- 오른쪽: 채널별 공헌이익 -->
-            <div class="chart-card">
-              <h3>📦 채널별 공헌이익 비교</h3>
-              <div class="chart-sub" id="pl-channel-sub"></div>
-              <div class="chart-wrap" style="height:220px;"><canvas id="pl-channel-chart"></canvas></div>
-              <div class="legend" style="margin-top:4px;display:flex;flex-wrap:wrap;gap:6px;">
-                <div class="legend-item"><div class="legend-swatch" style="background:rgba(30,184,111,0.4)"></div>전년액(좌)</div>
-                <div class="legend-item"><div class="legend-swatch" style="background:rgba(30,184,111,0.85)"></div>금년액(좌)</div>
-                <div class="legend-item"><div style="width:20px;height:2px;border-top:2px dashed #f4a261;margin:auto 0;"></div>전년율%(우)</div>
-                <div class="legend-item"><div style="width:20px;height:2px;background:#f4a261;margin:auto 0;border-radius:1px;"></div>금년율%(우)</div>
-              </div>
-              <div style="margin-top:6px;overflow-x:auto;">
-                <table class="data-table" style="font-size:10px;">
-                  <thead><tr><th>채널</th><th>전년공헌액</th><th>금년공헌액</th><th>증감액</th><th>증감률</th><th>전년율</th><th>금년율</th></tr></thead>
-                  <tbody id="pl-channel-tbody"></tbody>
-                </table>
-              </div>
+          </div>
+          <!-- 채널별 손익 표 -->
+          <div class="chart-card">
+            <h3>📦 채널별 손익 현황</h3>
+            <div style="overflow-x:auto;margin-top:6px;">
+              <table class="data-table" style="font-size:11px;min-width:600px;width:100%;">
+                <thead>
+                  <tr>
+                    <th rowspan="2" style="vertical-align:middle;">채널</th>
+                    <th colspan="3" style="text-align:center;background:rgba(67,97,238,0.08);">매출액</th>
+                    <th colspan="3" style="text-align:center;background:rgba(30,184,111,0.08);">공헌이익액</th>
+                    <th colspan="3" style="text-align:center;background:rgba(244,162,97,0.12);">공헌이익율</th>
+                  </tr>
+                  <tr>
+                    <th style="background:rgba(67,97,238,0.05);">금년</th>
+                    <th style="background:rgba(67,97,238,0.05);color:var(--text-mid);">전년</th>
+                    <th style="background:rgba(67,97,238,0.05);">성장율</th>
+                    <th style="background:rgba(30,184,111,0.05);">금년</th>
+                    <th style="background:rgba(30,184,111,0.05);color:var(--text-mid);">전년</th>
+                    <th style="background:rgba(30,184,111,0.05);">증감액</th>
+                    <th style="background:rgba(244,162,97,0.08);">금년</th>
+                    <th style="background:rgba(244,162,97,0.08);color:var(--text-mid);">전년</th>
+                    <th style="background:rgba(244,162,97,0.08);">증감</th>
+                  </tr>
+                </thead>
+                <tbody id="pl-channel-tbody"></tbody>
+              </table>
             </div>
           </div>
         </div>
@@ -2246,6 +2264,14 @@ function runAnalysis() {
   document.getElementById('empty-state').classList.add('hidden');
   document.getElementById('result-area').classList.remove('hidden');
     switchTab('dashboard');
+
+  // ─── 손익 탭 필터 연동: PL 데이터 로드 상태면 재렌더
+  if (plState.loaded) {
+    var plPane = document.getElementById('tab-pl');
+    if (plPane && plPane.classList.contains('active')) {
+      renderPlTab();
+    }
+  }
   } catch(e) {
     console.error(e);
     alert('분석 오류:\n' + e.message);
@@ -3181,8 +3207,8 @@ checkUpdateModal();
 // ═══════════════════════════════════════════════════════════════
 const plState = {
   loaded: false, loading: false,
-  monthly: {}, // {yr: {mon: {rev, cost}}}
-  channel: {}, // {yr: {ch: {rev, cost}}}
+  monthly: {}, // {yr: {mon: {rev, cost}}} — 기간 자동감지용
+  rawRows: [],  // [{yr, mon, ch, p1, p2, p3, p4, acct, amt}] — 필터 집계용
   years: []
 };
 
@@ -3219,7 +3245,7 @@ function getPlPeriod() {
 }
 
 // 실제 파싱 로직 (UI 없음 - 백그라운드에서도 호출 가능)
-const PL_CACHE_KEY = 'plDataCache_v2';
+const PL_CACHE_KEY = 'plDataCache_v3';
 async function _fetchAndParsePl() {
   if (plState.loaded || plState.loading) return plState.loaded;
   // sessionStorage 캐시 확인 (소요시간 ~0.1초)
@@ -3227,9 +3253,9 @@ async function _fetchAndParsePl() {
     const cached = sessionStorage.getItem(PL_CACHE_KEY);
     if (cached) {
       const d = JSON.parse(cached);
-      if (d && d.monthly && d.chMonthly && d.years) {
+      if (d && d.monthly && d.rawRows && d.years) {
         plState.monthly = d.monthly;
-        plState.chMonthly = d.chMonthly;
+        plState.rawRows = d.rawRows;
         plState.years = d.years;
         plState.loaded = true;
         console.log('[PL] 캐시 로드 성공');
@@ -3263,7 +3289,7 @@ async function _fetchAndParsePl() {
     // sessionStorage에 파싱 결과 캐시
     try {
       sessionStorage.setItem(PL_CACHE_KEY, JSON.stringify({
-        monthly: plState.monthly, chMonthly: plState.chMonthly, years: plState.years
+        monthly: plState.monthly, rawRows: plState.rawRows, years: plState.years
       }));
       console.log('[PL] 캐시 저장 완료');
     } catch(e2) { console.log('[PL] 캐시 저장 실패 (용량 초과)'); }
@@ -3301,7 +3327,7 @@ function parsePlRows(rows) {
   for (let i = 0; i < Math.min(5, rows.length); i++) {
     if (rows[i] && String(rows[i][0]).trim() === '연도') { dataStart = i + 1; break; }
   }
-  const monthly = {}, chMonthly = {}, yearSet = new Set();
+  const monthly = {}, yearSet = new Set(), rawRows = [];
   for (let i = dataStart; i < rows.length; i++) {
     const row = rows[i];
     if (!row || row[0] == null) continue;
@@ -3309,29 +3335,82 @@ function parsePlRows(rows) {
     if (!/^\d{4}$/.test(yr)) continue;
     const mon = parseInt(String(row[1] || '').trim(), 10);
     if (!mon || mon < 1 || mon > 12) continue;
-    const ch = (row[2] || '').toString().trim() || '미분류';
+    const ch  = (row[2] || '').toString().trim() || '미분류';
+    const p1  = (row[3] || '').toString().trim();
+    const p2  = (row[4] || '').toString().trim();
+    const p3  = (row[5] || '').toString().trim();
+    const p4  = (row[6] || '').toString().trim();
     const acct = (row[8] || '').toString().trim();
     const amt = Number(row[7]) || 0;
     if (!acct) continue;
     yearSet.add(yr);
-    // 월별 집계
+    // 월별 집계 — 기간 자동감지(getPlPeriod)에 사용
     if (!monthly[yr]) monthly[yr] = {};
     if (!monthly[yr][mon]) monthly[yr][mon] = { rev: 0, cost: 0 };
-    // 채널x월 집계 (동일월 필터링용)
-    if (!chMonthly[yr]) chMonthly[yr] = {};
-    if (!chMonthly[yr][mon]) chMonthly[yr][mon] = {};
-    if (!chMonthly[yr][mon][ch]) chMonthly[yr][mon][ch] = { rev: 0, cost: 0 };
-    if (acct === PL_REVENUE) {
-      monthly[yr][mon].rev += amt;
-      chMonthly[yr][mon][ch].rev += amt;
-    } else if (PL_CONTRIB_COSTS.includes(acct)) {
-      monthly[yr][mon].cost += amt;
-      chMonthly[yr][mon][ch].cost += amt;
-    }
+    if (acct === PL_REVENUE) { monthly[yr][mon].rev += amt; }
+    else if (PL_CONTRIB_COSTS.includes(acct)) { monthly[yr][mon].cost += amt; }
+    // rawRows — 필터 집계에 사용
+    rawRows.push({ yr, mon, ch, p1, p2, p3, p4, acct, amt });
   }
   plState.monthly = monthly;
-  plState.chMonthly = chMonthly;
+  plState.rawRows = rawRows;
   plState.years = [...yearSet].filter(y => /^\d{4}$/.test(y)).sort().reverse();
+}
+
+// 사이드바 filterState 기준으로 rawRows 필터링
+function filterPlRows() {
+  var fs = filterState;
+  return (plState.rawRows || []).filter(function(r) {
+    if (fs.ch.size > 0 && !fs.ch.has(r.ch)) return false;
+    if (fs.p1.size > 0 && !fs.p1.has(r.p1)) return false;
+    if (fs.p2.size > 0 && !fs.p2.has(r.p2)) return false;
+    if (fs.p3.size > 0 && !fs.p3.has(r.p3)) return false;
+    if (fs.p4.size > 0 && !fs.p4.has(r.p4)) return false;
+    return true;
+  });
+}
+
+// 손익 표 행 공통 빌더
+function plBuildRow(r) {
+  var na = '<span style="color:#aaa">-</span>';
+  var s = r.bold ? 'font-weight:700;background:var(--bg);border-top:1px solid var(--border);' : '';
+  function fmtAmt(v, hasDta, colored) {
+    if (!hasDta) return na;
+    var col = colored ? plAmtColor(v) : 'inherit';
+    return '<span style="color:' + col + (colored?';font-weight:600':'') + '">' + plFmtM(v) + '</span>';
+  }
+  function fmtGrowth(cV, pV, hasBoth) {
+    if (!hasBoth || !pV) return na;
+    var rate = (cV - pV) / Math.abs(pV) * 100;
+    return '<span style="color:' + plAmtColor(rate) + ';font-weight:600">' + (rate>=0?'+':'') + rate.toFixed(1) + '%</span>';
+  }
+  function fmtDiff(cV, pV, hasBoth) {
+    if (!hasBoth) return na;
+    var d = cV - pV;
+    return '<span style="color:' + plAmtColor(d) + '">' + (d>=0?'+':'') + plFmtM(d) + '</span>';
+  }
+  function fmtRate(rev, contrib, hasDta) {
+    if (!hasDta) return na;
+    var pct = rev ? contrib / rev * 100 : 0;
+    return pct.toFixed(1) + '%';
+  }
+  function fmtRateDiff(cRev, cC, pRev, pC, hasBoth) {
+    if (!hasBoth) return na;
+    var diff = (cRev ? cC/cRev*100 : 0) - (pRev ? pC/pRev*100 : 0);
+    return '<span style="color:' + plAmtColor(diff) + '">' + (diff>=0?'+':'') + diff.toFixed(1) + 'pp</span>';
+  }
+  return '<tr style="' + s + '">' +
+    '<td style="white-space:nowrap">' + r.label + '</td>' +
+    '<td style="text-align:right">' + fmtAmt(r.cRev, r.cd, false) + '</td>' +
+    '<td style="text-align:right;color:var(--text-mid)">' + fmtAmt(r.pRev, r.pd, false) + '</td>' +
+    '<td style="text-align:right">' + fmtGrowth(r.cRev, r.pRev, r.cd && r.pd) + '</td>' +
+    '<td style="text-align:right">' + fmtAmt(r.cC, r.cd, true) + '</td>' +
+    '<td style="text-align:right;color:var(--text-mid)">' + fmtAmt(r.pC, r.pd, true) + '</td>' +
+    '<td style="text-align:right">' + fmtDiff(r.cC, r.pC, r.cd && r.pd) + '</td>' +
+    '<td style="text-align:right">' + fmtRate(r.cRev, r.cC, r.cd) + '</td>' +
+    '<td style="text-align:right;color:var(--text-mid)">' + fmtRate(r.pRev, r.pC, r.pd) + '</td>' +
+    '<td style="text-align:right">' + fmtRateDiff(r.cRev, r.cC, r.pRev, r.pC, r.cd && r.pd) + '</td>' +
+  '</tr>';
 }
 
 function renderPlTab() {
@@ -3339,7 +3418,7 @@ function renderPlTab() {
   const lbl = document.getElementById('pl-period-lbl');
   if (lbl) {
     if (currYr && prevYr) {
-      lbl.textContent = prevYr + '→' + currYr + '년   ' + fromM + '~' + toM + '월';
+      lbl.textContent = prevYr + '→' + currYr + '년   동일월 ' + fromM + '~' + toM + '월 누계';
     } else {
       lbl.textContent = '분석 데이터를 먼저 로드하세요';
     }
@@ -3414,148 +3493,71 @@ function buildYoyComboChart(canvasId, labels, prevAmts, currAmts, prevPcts, curr
 }
 
 function renderPlMonthly(currYr, prevYr, fromM, toM) {
-  const cm = plState.monthly[currYr] || {};
-  const pm = plState.monthly[prevYr] || {};
-  const labels=[], prevAmts=[], currAmts=[], prevPcts=[], currPcts=[], rows=[];
-  let spRev=0, scRev=0, spContrib=0, scContrib=0;
-
-  for (let m = fromM; m <= toM; m++) {
-    const cd = cm[m]; const pd = pm[m];
-    // 전년도 데이터도 없으면 해당 월 자체를 스킵
-    if (!pd && !cd) continue;
-    const pRev = pd ? pd.rev : 0, pCost = pd ? pd.cost : 0;
-    const cRev = cd ? cd.rev : 0, cCost = cd ? cd.cost : 0;
-    const pC = pRev - pCost, cC = cRev - cCost;
-    labels.push(m + '월');
-    // 전년: 언제나 표시 / 금년: 데이터 없으면 null (미래월 공란)
-    prevAmts.push(pd ? Math.round(pC/1e6) : null);
-    currAmts.push(cd ? Math.round(cC/1e6) : null);
-    prevPcts.push(pd ? parseFloat(plPct(pRev, pC).toFixed(1)) : null);
-    currPcts.push(cd ? parseFloat(plPct(cRev, cC).toFixed(1)) : null);
-    // 누계 합산은 실제 데이터 있는 월만
-    if (pd) { spRev += pRev; spContrib += pC; }
-    if (cd) { scRev += cRev; scContrib += cC; }
-    rows.push({ label:m+'월', pC: pd?pC:null, cC: cd?cC:null,
-      diff: (pd && cd) ? cC-pC : null,
-      diffRate: (pd && cd) ? plDiffRate(pC, cC) : null,
-      pPct: pd ? plPct(pRev,pC) : null, cPct: cd ? plPct(cRev,cC) : null });
-  }
-
-  buildYoyComboChart('pl-monthly-chart', labels, prevAmts, currAmts, prevPcts, currPcts,
-    'rgba(74,144,217,0.5)', 'rgba(67,97,238,0.85)', '#bbb', '#e63946');
-
-  const sub = document.getElementById('pl-monthly-sub');
-  if (sub) {
-    if (!labels.length) {
-      sub.textContent = '해당 기간에 데이터 없음';
-    } else {
-      const td = scContrib - spContrib;
-      const tr = plDiffRate(spContrib, scContrib);
-      var periodLabel = fromM === toM ? fromM+'월' : fromM+'~'+toM+'월 누계';
-      sub.innerHTML = '동일월 기준 ' + periodLabel +
-        ' | 전년(' + (prevYr||'?') + ') ' + plFmt(spContrib) +
-        ' → 금년(' + (currYr||'?') + ') ' + plFmt(scContrib) +
-        ' <span style="color:' + plAmtColor(td) + ';font-weight:600;margin-left:4px;">(' +
-        (td>=0?'+':'') + plFmt(td) + ' / ' + (tr>=0?'+':'') + tr.toFixed(1) + '%)</span>';
+  var fRows = filterPlRows();
+  var cm = {}, pm = {};
+  fRows.forEach(function(r) {
+    if (r.mon < fromM || r.mon > toM) return;
+    if (r.yr === currYr) {
+      if (!cm[r.mon]) cm[r.mon] = { rev: 0, cost: 0 };
+      if (r.acct === PL_REVENUE) cm[r.mon].rev += r.amt;
+      else if (PL_CONTRIB_COSTS.includes(r.acct)) cm[r.mon].cost += r.amt;
     }
+    if (r.yr === prevYr) {
+      if (!pm[r.mon]) pm[r.mon] = { rev: 0, cost: 0 };
+      if (r.acct === PL_REVENUE) pm[r.mon].rev += r.amt;
+      else if (PL_CONTRIB_COSTS.includes(r.acct)) pm[r.mon].cost += r.amt;
+    }
+  });
+  var rows = [];
+  var totCRev=0, totPRev=0, totCC=0, totPC=0;
+  for (var m = fromM; m <= toM; m++) {
+    var cd = cm[m], pd = pm[m];
+    if (!cd && !pd) continue;
+    var cRev = cd ? cd.rev : 0, cCost = cd ? cd.cost : 0;
+    var pRev = pd ? pd.rev : 0, pCost = pd ? pd.cost : 0;
+    var cC = cRev - cCost, pC = pRev - pCost;
+    if (cd) { totCRev += cRev; totCC += cC; }
+    if (pd) { totPRev += pRev; totPC += pC; }
+    rows.push({ label: m+'월', cd:!!cd, pd:!!pd, cRev, pRev, cC, pC });
   }
-
-  const tbody = document.getElementById('pl-monthly-tbody');
-  if (tbody) {
-    const all = rows.length ? [...rows, { label:'합계', pC:spContrib, cC:scContrib,
-      diff:scContrib-spContrib, diffRate:plDiffRate(spContrib,scContrib),
-      pPct:plPct(spRev,spContrib), cPct:plPct(scRev,scContrib), bold:true }] : [];
-    tbody.innerHTML = all.map(function(r) {
-      const s = r.bold ? 'font-weight:700;background:var(--bg);' : '';
-      const dc = r.diff != null ? plAmtColor(r.diff) : '#aaa';
-      const na = '<span style="color:#ccc">-</span>';
-      return '<tr style="' + s + '">' +
-        '<td>' + r.label + '</td>' +
-        '<td style="text-align:right">' + (r.pC != null ? plFmtM(r.pC) : na) + '</td>' +
-        '<td style="text-align:right;color:' + (r.cC!=null?plAmtColor(r.cC):'#aaa') + ';font-weight:600">' + (r.cC != null ? plFmtM(r.cC) : na) + '</td>' +
-        '<td style="text-align:right;color:' + dc + '">' + (r.diff != null ? (r.diff>=0?'+':'') + plFmtM(r.diff) : na) + '</td>' +
-        '<td style="text-align:right;color:' + (r.diffRate!=null?plAmtColor(r.diffRate):'#aaa') + '">' + (r.diffRate != null ? (r.diffRate>=0?'+':'') + r.diffRate.toFixed(1) + '%' : na) + '</td>' +
-        '<td style="text-align:right;color:var(--text-mid)">' + (r.pPct != null ? r.pPct.toFixed(1) + '%' : na) + '</td>' +
-        '<td style="text-align:right;font-weight:600">' + (r.cPct != null ? r.cPct.toFixed(1) + '%' : na) + '</td>' +
-      '</tr>';
-    }).join('');
-  }
+  rows.push({ label:'합계', cd:true, pd:true,
+    cRev:totCRev, pRev:totPRev, cC:totCC, pC:totPC, bold:true });
+  var tbody = document.getElementById('pl-monthly-tbody');
+  if (tbody) { tbody.innerHTML = rows.map(plBuildRow).join(''); }
 }
 
 function renderPlChannel(currYr, prevYr, fromM, toM) {
-  // 동일월 기준: fromM~toM 범위만 집계
-  const cc = {}, pc = {};
-  for (let m = fromM; m <= toM; m++) {
-    const cMon = ((plState.chMonthly[currYr] || {})[m]) || {};
-    const pMon = ((plState.chMonthly[prevYr] || {})[m]) || {};
-    Object.keys(cMon).forEach(function(ch) {
-      if (!cc[ch]) cc[ch] = {rev:0, cost:0};
-      cc[ch].rev += cMon[ch].rev; cc[ch].cost += cMon[ch].cost;
-    });
-    Object.keys(pMon).forEach(function(ch) {
-      if (!pc[ch]) pc[ch] = {rev:0, cost:0};
-      pc[ch].rev += pMon[ch].rev; pc[ch].cost += pMon[ch].cost;
-    });
-  }
-  const allChs = [...new Set([...Object.keys(cc), ...Object.keys(pc)])];
-  const entries = allChs.map(function(ch) {
-    const cd = cc[ch]||{rev:0,cost:0}, pd = pc[ch]||{rev:0,cost:0};
-    const pC = pd.rev - pd.cost, cC = cd.rev - cd.cost;
-    return { ch, pRev:pd.rev, cRev:cd.rev, pC, cC,
-      diff:cC-pC, diffRate:plDiffRate(pC,cC),
-      pPct:plPct(pd.rev,pC), cPct:plPct(cd.rev,cC) };
-  }).filter(function(e){ return e.pRev||e.cRev; })
-    .sort(function(a,b){ return b.cC - a.cC; });
-
-  buildYoyComboChart('pl-channel-chart',
-    entries.map(function(e){return e.ch;}),
-    entries.map(function(e){return Math.round(e.pC/1e6);}),
-    entries.map(function(e){return Math.round(e.cC/1e6);}),
-    entries.map(function(e){return parseFloat(e.pPct.toFixed(1));}),
-    entries.map(function(e){return parseFloat(e.cPct.toFixed(1));}),
-    'rgba(30,184,111,0.4)', 'rgba(30,184,111,0.85)', '#ccc', '#f4a261');
-
-  const spRev = entries.reduce(function(s,e){return s+e.pRev;},0);
-  const scRev = entries.reduce(function(s,e){return s+e.cRev;},0);
-  const sp = entries.reduce(function(s,e){return s+e.pC;},0);
-  const sc = entries.reduce(function(s,e){return s+e.cC;},0);
-  const td = sc - sp, tr2 = plDiffRate(sp, sc);
-
-  const sub = document.getElementById('pl-channel-sub');
-  if (sub) {
-    if (!entries.length) {
-      sub.textContent = '해당 기간에 데이터 없음';
-    } else {
-      var cPeriodLabel = fromM === toM ? fromM+'월' : fromM+'~'+toM+'월 동일월 누계';
-      sub.innerHTML = cPeriodLabel + ' | 채널 ' + entries.length + '개' +
-        ' | 전년(' + (prevYr||'?') + ') ' + plFmt(sp) +
-        ' → 금년(' + (currYr||'?') + ') ' + plFmt(sc) +
-        ' <span style="color:' + plAmtColor(td) + ';font-weight:600;margin-left:4px;">(' +
-        (td>=0?'+':'') + plFmt(td) + ' / ' + (tr2>=0?'+':'') + tr2.toFixed(1) + '%)</span>';
+  var fRows = filterPlRows();
+  var cc = {}, pc = {};
+  fRows.forEach(function(r) {
+    if (r.mon < fromM || r.mon > toM) return;
+    if (r.yr === currYr) {
+      if (!cc[r.ch]) cc[r.ch] = { rev: 0, cost: 0 };
+      if (r.acct === PL_REVENUE) cc[r.ch].rev += r.amt;
+      else if (PL_CONTRIB_COSTS.includes(r.acct)) cc[r.ch].cost += r.amt;
     }
-  }
-
-  const tbody = document.getElementById('pl-channel-tbody');
-  if (tbody) {
-    const all = entries.length ? [...entries, { ch:'합계', pC:sp, cC:sc,
-      diff:td, diffRate:tr2, pPct:plPct(spRev,sp), cPct:plPct(scRev,sc), bold:true }] : [];
-    tbody.innerHTML = all.map(function(r) {
-      const s = r.bold ? 'font-weight:700;background:var(--bg);' : '';
-      const dc = plAmtColor(r.diff);
-      return '<tr style="' + s + '">' +
-        '<td>' + (r.ch||r.label) + '</td>' +
-        '<td style="text-align:right">' + plFmtM(r.pC) + '</td>' +
-        '<td style="text-align:right;color:' + plAmtColor(r.cC) + ';font-weight:600">' + plFmtM(r.cC) + '</td>' +
-        '<td style="text-align:right;color:' + dc + '">' + (r.diff>=0?'+':'') + plFmtM(r.diff) + '</td>' +
-        '<td style="text-align:right;color:' + plAmtColor(r.diffRate) + '">' + (r.diffRate>=0?'+':'') + r.diffRate.toFixed(1) + '%</td>' +
-        '<td style="text-align:right;color:var(--text-mid)">' + r.pPct.toFixed(1) + '%</td>' +
-        '<td style="text-align:right;font-weight:600">' + r.cPct.toFixed(1) + '%</td>' +
-      '</tr>';
-    }).join('');
-  }
+    if (r.yr === prevYr) {
+      if (!pc[r.ch]) pc[r.ch] = { rev: 0, cost: 0 };
+      if (r.acct === PL_REVENUE) pc[r.ch].rev += r.amt;
+      else if (PL_CONTRIB_COSTS.includes(r.acct)) pc[r.ch].cost += r.amt;
+    }
+  });
+  var allChs = [...new Set([...Object.keys(cc), ...Object.keys(pc)])];
+  var totCRev=0, totPRev=0, totCC=0, totPC=0;
+  var rows = allChs.map(function(ch) {
+    var c = cc[ch]||{rev:0,cost:0}, p = pc[ch]||{rev:0,cost:0};
+    var cC = c.rev - c.cost, pC = p.rev - p.cost;
+    if (cc[ch]) { totCRev += c.rev; totCC += cC; }
+    if (pc[ch]) { totPRev += p.rev; totPC += pC; }
+    return { label:ch, cd:!!cc[ch], pd:!!pc[ch], cRev:c.rev, pRev:p.rev, cC, pC };
+  }).filter(function(r){ return r.cRev||r.pRev; })
+    .sort(function(a,b){ return b.cC - a.cC; });
+  rows.push({ label:'합계', cd:true, pd:true,
+    cRev:totCRev, pRev:totPRev, cC:totCC, pC:totPC, bold:true });
+  var tbody = document.getElementById('pl-channel-tbody');
+  if (tbody) { tbody.innerHTML = rows.map(plBuildRow).join(''); }
 }
 
-// 품목별 탭 손익 버튼
 function showProdPl(mode) {
   const card = document.getElementById('prod-pl-card');
   if (!card) return;
