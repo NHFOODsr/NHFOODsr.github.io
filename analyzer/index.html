@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -398,6 +398,7 @@ body[data-mode="yoy"] .kpi-row {
   gap: 8px;
 }
 
+.pl-tab-btn { color: var(--accent) !important; font-weight: 700 !important; }
 .chart-card {
   background: var(--surface);
   border-radius: var(--radius);
@@ -669,6 +670,7 @@ tbody tr:last-child td { border-bottom: none; font-weight: 700; background: #F4F
 
 .tab-pane { display: none; flex-direction: column; gap: 10px; }
 .tab-pane.active { display: flex; }
+#tab-pl.active { display: block; }
 
 /* Highlight card */
 .highlight-card {
@@ -798,7 +800,6 @@ tr.row-highlight td:first-child { border-left: 3px solid var(--neutral); }
 .update-modal-btn:hover { background: var(--primary-light); }
 
 /* ── PL 탭 스타일 ── */
-.pl-tab-btn { color: var(--accent) !important; font-weight: 700 !important; }
 .pl-mini-btn {
   display: inline-flex; align-items: center; gap: 3px;
   padding: 3px 8px; font-size: 10px; font-weight: 600;
@@ -1165,8 +1166,7 @@ tr.row-highlight td:first-child { border-left: 3px solid var(--neutral); }
           <div style="display:flex; flex-direction:column; gap:8px;">
             <div class="chart-card">
               <h3 style="display:flex;justify-content:space-between;align-items:center;">
-                <span id="prod-m-title">월별 품목 상세 분석</span>
-                <button class="pl-mini-btn" id="btn-prod-m-pl" onclick="showProdPl('monthly')" title="월별 공헌이익 보기">📈 손익 확인</button>
+                <span id="prod-m-title">월별 품목 상세 분석</span><button class="pl-mini-btn" id="btn-prod-m-pl" onclick="showProdPl('monthly')" title="월별 공헌이익 보기">📈 손익 확인</button>
               </h3>
               <div class="chart-sub" id="prod-m-sub">← 왼쪽 품목명을 클릭하세요</div>
               <div class="chart-wrap" style="height:180px;"><canvas id="prod-m-chart"></canvas></div>
@@ -1177,8 +1177,7 @@ tr.row-highlight td:first-child { border-left: 3px solid var(--neutral); }
             </div>
             <div class="chart-card">
               <h3 style="display:flex;justify-content:space-between;align-items:center;">
-                <span id="prod-c-title">채널별 품목 상세 분석</span>
-                <button class="pl-mini-btn" id="btn-prod-c-pl" onclick="showProdPl('channel')" title="채널별 공헌이익 보기">📈 손익보기</button>
+                <span id="prod-c-title">채널별 품목 상세 분석</span><button class="pl-mini-btn" id="btn-prod-c-pl" onclick="showProdPl('channel')" title="채널별 공헌이익 보기">📈 손익보기</button>
               </h3>
               <div class="chart-sub" id="prod-c-sub">← 왼쪽 품목명을 클릭하세요</div>
               <div class="chart-wrap" style="height:180px;"><canvas id="prod-c-chart"></canvas></div>
@@ -1189,30 +1188,7 @@ tr.row-highlight td:first-child { border-left: 3px solid var(--neutral); }
             </div>
           </div>
         </div>
-        <!-- 하단 손익 그래프 -->
-        <div class="chart-card" id="prod-pl-card" style="margin-top:8px;display:none;">
-          <h3 style="display:flex;justify-content:space-between;align-items:center;">
-            <span id="prod-pl-title">공헌이익 분석</span>
-            <button class="pl-mini-btn" onclick="document.getElementById('prod-pl-card').style.display='none'" style="background:#e74c3c;">× 닫기</button>
-          </h3>
-          <div id="prod-pl-loading" style="display:none;text-align:center;padding:20px;font-size:12px;color:var(--text-mid);">폴 데이터 로딩 중...</div>
-          <div id="prod-pl-body" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-            <div>
-              <div class="chart-wrap" style="height:180px;"><canvas id="prod-pl-chart"></canvas></div>
-              <div class="legend" style="margin-top:4px;">
-                <div class="legend-item"><div class="legend-swatch" style="background:rgba(67,97,238,0.75)"></div>공헌이익액(좌)</div>
-                <div class="legend-item"><div class="legend-swatch" style="background:#e63946;height:2px;border-radius:1px;width:20px;"></div>공헌이익률%(우)</div>
-              </div>
-            </div>
-            <div style="overflow-y:auto;max-height:220px;">
-              <table class="data-table" id="prod-pl-table">
-                <thead><tr><th>구분</th><th>공헌이익액</th><th>공헌이익률</th></tr></thead>
-                <tbody id="prod-pl-tbody"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </div>
+
 
       <!-- ── Tab 5: 입점매장 분석 ── -->
       <div class="tab-pane" id="tab-store">
@@ -1228,23 +1204,20 @@ tr.row-highlight td:first-child { border-left: 3px solid var(--neutral); }
           <div id="store-table-wrap" style="overflow-x:auto;"></div>
         </div>
       </div>
-    </div><!-- /result-area -->
-
 
       <!-- ── Tab 6: 손익 분석 ── -->
       <div class="tab-pane" id="tab-pl">
+        <div style="background:red;color:white;padding:20px;font-size:20px;font-weight:bold">★ TAB-PL 작동 중 ★</div>
         <div id="pl-loading-msg" style="display:flex;align-items:center;justify-content:center;height:200px;flex-direction:column;gap:12px;">
           <div style="font-size:28px;">⏳</div>
-          <div style="font-size:13px;color:var(--text-mid);">손익 데이터 로딩 중...<br><small>처음 열 때 약 10초 소요될 수 있습니다</small></div>
+          <div id="pl-loading-txt" style="font-size:13px;color:var(--text-mid);text-align:center">손익 데이터 로딩 중...<br><small>처음 열 때 약 3초 소요됩니다</small></div>
         </div>
-        <div id="pl-main" style="display:none;">
-          <!-- 기간 정보 바 -->
+        <div id="pl-main" style="display:none;min-height:200px;">
           <div id="pl-period-info" style="display:flex;align-items:center;gap:6px;margin-bottom:8px;padding:5px 10px;background:var(--surface);border-radius:var(--radius);border:1px solid var(--border);font-size:11px;">
-            <span style="font-weight:600;color:var(--text-mid);">분析 기간</span>
+            <span style="font-weight:600;color:var(--text-mid);">분석 기간</span>
             <span id="pl-period-lbl" style="color:var(--primary);font-weight:600;"></span>
             <span style="margin-left:auto;color:var(--text-light);">공헌이익 = 매출액 − (매출원가+수수료+개첩비+개발비+운반비+광고료+용역비+전자상거래수수료)</span>
           </div>
-          <!-- 월별 손익 표 -->
           <div class="chart-card" style="margin-bottom:8px;">
             <h3>📅 월별 손익 현황</h3>
             <div style="overflow-x:auto;margin-top:6px;">
@@ -1272,7 +1245,6 @@ tr.row-highlight td:first-child { border-left: 3px solid var(--neutral); }
               </table>
             </div>
           </div>
-          <!-- 채널별 손익 표 -->
           <div class="chart-card">
             <h3>📦 채널별 손익 현황</h3>
             <div style="overflow-x:auto;margin-top:6px;">
@@ -1302,6 +1274,12 @@ tr.row-highlight td:first-child { border-left: 3px solid var(--neutral); }
           </div>
         </div>
       </div>
+    </div><!-- /result-area -->
+
+      </div>
+
+      <!-- ── Tab 6: 손익 분석 ── -->
+      
   </main>
 </div><!-- /layout -->
 
@@ -2298,10 +2276,34 @@ function switchTab(name) {
     btn.classList.toggle('active', names[i] === name);
   });
   document.querySelectorAll('.tab-pane').forEach(pane => {
-    pane.classList.toggle('active', pane.id === 'tab-' + name);
+    var isActive = pane.id === 'tab-' + name;
+    pane.classList.toggle('active', isActive);
+    pane.style.display = isActive ? 'block' : 'none';
   });
   if (name === 'store') renderStoreTab();
-  if (name === 'pl') initPlTab();
+  if (name === 'pl') {
+    initPlTab();
+    // 3초 후 강제 표시 (디버그)
+    setTimeout(function() {
+      var lm = document.getElementById('pl-loading-msg');
+      var pm = document.getElementById('pl-main');
+      var info = 'rows=' + (plState.rawRows||[]).length + ' loaded=' + plState.loaded + ' loading=' + plState.loading;
+      if (pm) {
+        pm.style.cssText = 'display:block!important;min-height:300px;';
+        var d = pm.querySelector('#pl-period-lbl');
+        if (d) d.textContent = info;
+        // 강제로 테스트 텍스트 추가
+        if (!pm.querySelector('.force-test')) {
+          var t = document.createElement('div');
+          t.className = 'force-test';
+          t.style.cssText = 'background:orange;color:black;padding:10px;font-size:14px;font-weight:bold';
+          t.textContent = '강제표시: ' + info;
+          pm.insertBefore(t, pm.firstChild);
+        }
+      }
+      if (lm) lm.style.cssText = 'display:none!important';
+    }, 3000);
+  }
 }
 
 // ─────────────────────────────────────────────────
@@ -3187,14 +3189,14 @@ function checkUpdateModal() {
   if (!APP_UPDATE.items.length) return;
   var seen = null;
   try { seen = localStorage.getItem('nhfood_seen_update'); } catch (_) {}
-  if (seen === APP_UPDATE.version) return;
+  if (seen === 'true') return;
   document.getElementById('update-modal-date').textContent = APP_UPDATE.date;
   document.getElementById('update-modal-list').innerHTML = APP_UPDATE.items.map(function(t) { return '<li>' + t + '</li>'; }).join('');
   document.getElementById('update-overlay').classList.remove('hidden');
 }
 function closeUpdateModal() {
   document.getElementById('update-overlay').classList.add('hidden');
-  try { localStorage.setItem('nhfood_seen_update', APP_UPDATE.version); } catch (_) {}
+  try { localStorage.setItem('nhfood_seen_update', 'true'); } catch (_) {}
 }
 
 // 저장된 파일 복원 (data.json 자동 fetch → 실패 시 IndexedDB 폴백)
@@ -3245,81 +3247,80 @@ function getPlPeriod() {
 }
 
 // 실제 파싱 로직 (UI 없음 - 백그라운드에서도 호출 가능)
-const PL_CACHE_KEY = 'plDataCache_v3';
+const PL_CACHE_KEY = 'plDataCache_v4';
 async function _fetchAndParsePl() {
   if (plState.loaded || plState.loading) return plState.loaded;
-  // sessionStorage 캐시 확인 (소요시간 ~0.1초)
-  try {
-    const cached = sessionStorage.getItem(PL_CACHE_KEY);
-    if (cached) {
-      const d = JSON.parse(cached);
-      if (d && d.monthly && d.rawRows && d.years) {
-        plState.monthly = d.monthly;
-        plState.rawRows = d.rawRows;
-        plState.years = d.years;
-        plState.loaded = true;
-        console.log('[PL] 캐시 로드 성공');
-        return true;
-      }
-    }
-  } catch(e) { console.log('[PL] 캐시 없음, 새로 파싱'); }
-
   plState.loading = true;
+  var dbgEl = document.getElementById('pl-loading-txt');
+  function dbg(msg) { console.log('[PL]', msg); if (dbgEl) dbgEl.innerHTML = msg; }
   try {
-    const resp = await fetch('/pl_default.xlsx');
+    dbg('pl_data.json 요청 중...');
+    const ctrl = new AbortController();
+    const timer = setTimeout(function(){ ctrl.abort(); }, 20000);
+    const resp = await fetch('/pl_data.json', { signal: ctrl.signal });
+    clearTimeout(timer);
+    dbg('응답받음: HTTP ' + resp.status);
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const buf = await resp.arrayBuffer();
-    const zip = await JSZip.loadAsync(buf);
-    const minStyles = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
-  <fonts count="1"><font/></fonts>
-  <fills count="2"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill></fills>
-  <borders count="1"><border><left/><right/><top/><bottom/><diagonal/></border></borders>
-  <cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs>
-  <cellXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/></cellXfs>
-</styleSheet>`;
-    if (zip.file('xl/styles.xml')) zip.file('xl/styles.xml', minStyles);
-    const fixedBuf = await zip.generateAsync({ type: 'arraybuffer' });
-    const wb = XLSX.read(new Uint8Array(fixedBuf), { type: 'array', cellStyles: false, sheets: ['누적Data'] });
-    const ws = wb.Sheets['누적Data'];
-    if (!ws) throw new Error('누적Data 시트 없음');
-    const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: null });
-    parsePlRows(rows);
+    dbg('JSON 파싱 중 (4.9MB)...');
+    const d = await resp.json();
+    dbg('행 변환 중 (' + (d.rawRows||[]).length + '행)...');
+    plState.rawRows = (d.rawRows || []).map(function(r) {
+      return { yr:r[0], mon:r[1], ch:r[2], p1:r[3], p2:r[4], p3:r[5], p4:r[6],
+               acct: r[7]==='R' ? PL_REVENUE : PL_CONTRIB_COSTS[0], amt:r[8], _t:r[7] };
+    });
+    plState.monthly = d.monthly || {};
+    plState.years = d.years || [];
     plState.loaded = true;
-    // sessionStorage에 파싱 결과 캐시
-    try {
-      sessionStorage.setItem(PL_CACHE_KEY, JSON.stringify({
-        monthly: plState.monthly, rawRows: plState.rawRows, years: plState.years
-      }));
-      console.log('[PL] 캐시 저장 완료');
-    } catch(e2) { console.log('[PL] 캐시 저장 실패 (용량 초과)'); }
+    dbg('로드 완료: ' + plState.rawRows.length + '행');
     return true;
   } catch(e) {
     console.error('[PL] 로드 실패', e);
+    var msg = e.name==='AbortError' ? '⏱️ 타임아웃 (20초 초과)' : '❌ ' + e.message;
+    if (dbgEl) dbgEl.innerHTML = msg + '<br><button onclick="plState.loading=false;plState.loaded=false;initPlTab()" style="margin-top:6px;padding:3px 10px">🔄 재시도</button>';
     return false;
   } finally { plState.loading = false; }
 }
 
+
 async function initPlTab() {
+  var loadEl = document.getElementById('pl-loading-msg');
+  var mainEl = document.getElementById('pl-main');
+  function setMsg(txt) { var t = document.getElementById('pl-loading-txt'); if (t) t.innerHTML = txt; }
   if (plState.loading) {
-    // 프리로딩 중이면 대기
-    document.getElementById('pl-loading-msg').style.display = 'flex';
-    document.getElementById('pl-main').style.display = 'none';
+    if (loadEl) loadEl.style.display = 'flex';
+    if (mainEl) mainEl.style.display = 'none';
+    setMsg('백그라운드 로딩 대기 중...');
     while (plState.loading) await new Promise(function(r){ setTimeout(r, 80); });
   }
   if (!plState.loaded) {
-    document.getElementById('pl-loading-msg').style.display = 'flex';
-    document.getElementById('pl-main').style.display = 'none';
+    if (loadEl) loadEl.style.display = 'flex';
+    if (mainEl) mainEl.style.display = 'none';
+    setMsg('손익 데이터 다운로드 중...');
     const ok = await _fetchAndParsePl();
     if (!ok) {
-      document.getElementById('pl-loading-msg').innerHTML =
-        '<div style="color:#e74c3c;font-size:13px;">❌ PL 데이터 로드 실패</div>';
+      if (loadEl) loadEl.innerHTML = '<div style="color:#e74c3c;font-size:14px;text-align:center">❌ PL 데이터 로드 실패<br><small>pl_data.json 파일을 확인하세요</small><br><button onclick="plState.loading=false;plState.loaded=false;initPlTab()" style="margin-top:8px;padding:4px 12px;cursor:pointer">🔄 재시도</button></div>';
       return;
     }
   }
-  document.getElementById('pl-loading-msg').style.display = 'none';
-  document.getElementById('pl-main').style.display = 'block';
-  renderPlTab();
+  if (loadEl) loadEl.style.display = 'none';
+  if (mainEl) { mainEl.style.display = 'block'; mainEl.style.width = '100%'; }
+  // 진단: pl-main 상태 표시
+  var diagEl = document.getElementById('pl-period-lbl');
+  if (diagEl) diagEl.textContent = '[진단] rows=' + (plState.rawRows||[]).length + ' yr=' + (state.currYear||'없음') + ' loaded=' + plState.loaded;
+  try {
+    renderPlTab();
+  } catch(err) {
+    if (loadEl) { loadEl.style.display = 'flex'; loadEl.innerHTML = '<div style="color:#e74c3c;font-size:13px;text-align:center">❌ renderPlTab 오류:<br>' + err.message + '</div>'; }
+    // mainEl은 유지, 오류만 상단에 표시
+    if (mainEl) {
+      mainEl.style.display = 'block';
+      var errBanner = document.createElement('div');
+      errBanner.style.cssText = 'background:#fee;color:#e00;padding:10px;margin-bottom:8px;border-radius:4px;font-size:13px';
+      errBanner.textContent = '❌ renderPlTab 오류: ' + err.message;
+      mainEl.insertBefore(errBanner, mainEl.firstChild);
+    }
+    console.error('renderPlTab 오류:', err);
+  }
 }
 
 function parsePlRows(rows) {
@@ -3499,13 +3500,13 @@ function renderPlMonthly(currYr, prevYr, fromM, toM) {
     if (r.mon < fromM || r.mon > toM) return;
     if (r.yr === currYr) {
       if (!cm[r.mon]) cm[r.mon] = { rev: 0, cost: 0 };
-      if (r.acct === PL_REVENUE) cm[r.mon].rev += r.amt;
-      else if (PL_CONTRIB_COSTS.includes(r.acct)) cm[r.mon].cost += r.amt;
+      if (r._t==='R') cm[r.mon].rev += r.amt;
+      else if (r._t==='C') cm[r.mon].cost += r.amt;
     }
     if (r.yr === prevYr) {
       if (!pm[r.mon]) pm[r.mon] = { rev: 0, cost: 0 };
-      if (r.acct === PL_REVENUE) pm[r.mon].rev += r.amt;
-      else if (PL_CONTRIB_COSTS.includes(r.acct)) pm[r.mon].cost += r.amt;
+      if (r._t==='R') pm[r.mon].rev += r.amt;
+      else if (r._t==='C') pm[r.mon].cost += r.amt;
     }
   });
   var rows = [];
@@ -3533,13 +3534,13 @@ function renderPlChannel(currYr, prevYr, fromM, toM) {
     if (r.mon < fromM || r.mon > toM) return;
     if (r.yr === currYr) {
       if (!cc[r.ch]) cc[r.ch] = { rev: 0, cost: 0 };
-      if (r.acct === PL_REVENUE) cc[r.ch].rev += r.amt;
-      else if (PL_CONTRIB_COSTS.includes(r.acct)) cc[r.ch].cost += r.amt;
+      if (r._t==='R') cc[r.ch].rev += r.amt;
+      else if (r._t==='C') cc[r.ch].cost += r.amt;
     }
     if (r.yr === prevYr) {
       if (!pc[r.ch]) pc[r.ch] = { rev: 0, cost: 0 };
-      if (r.acct === PL_REVENUE) pc[r.ch].rev += r.amt;
-      else if (PL_CONTRIB_COSTS.includes(r.acct)) pc[r.ch].cost += r.amt;
+      if (r._t==='R') pc[r.ch].rev += r.amt;
+      else if (r._t==='C') pc[r.ch].cost += r.amt;
     }
   });
   var allChs = [...new Set([...Object.keys(cc), ...Object.keys(pc)])];
@@ -3568,12 +3569,12 @@ function showProdPl(mode) {
     document.getElementById('prod-pl-body').style.display = 'none';
     initPlTab().then(function() {
       document.getElementById('prod-pl-loading').style.display = 'none';
-      document.getElementById('prod-pl-body').style.display = 'grid';
+      document.getElementById('prod-pl-body').style.display = 'block';
       renderProdPlChart(mode);
     });
   } else {
     document.getElementById('prod-pl-loading').style.display = 'none';
-    document.getElementById('prod-pl-body').style.display = 'grid';
+    document.getElementById('prod-pl-body').style.display = 'block';
     renderProdPlChart(mode);
   }
 }
@@ -3581,46 +3582,69 @@ function showProdPl(mode) {
 function renderProdPlChart(mode) {
   const { fromM, toM, currYr, prevYr } = getPlPeriod();
   const titleEl = document.getElementById('prod-pl-title');
-  const cm = plState.monthly[currYr] || {};
-  const pm = plState.monthly[prevYr] || {};
-  const cc = plState.channel[currYr] || {};
-  const pc2 = plState.channel[prevYr] || {};
+  var fRows = filterPlRows();
+  var tbody = document.getElementById('prod-pl-tbody');
+  if (!tbody) return;
 
   if (mode === 'monthly') {
     if (titleEl) titleEl.textContent = '📅 월별 공헌이익 전년대비 (' + (prevYr||'?') + '→' + (currYr||'?') + '년)';
-    const labels=[], pA=[], cA=[], pP=[], cP=[], rows=[];
-    let sp=0, sc=0, spR=0, scR=0;
-    for (let m=fromM; m<=toM; m++) {
-      const cd=cm[m]||{rev:0,cost:0}, pd=pm[m]||{rev:0,cost:0};
-      if (!cd.rev && !pd.rev) continue;
-      const pC=pd.rev-pd.cost, cC=cd.rev-cd.cost;
-      labels.push(m+'월'); pA.push(Math.round(pC/1e6)); cA.push(Math.round(cC/1e6));
-      pP.push(parseFloat(plPct(pd.rev,pC).toFixed(1))); cP.push(parseFloat(plPct(cd.rev,cC).toFixed(1)));
-      rows.push({ label:m+'월', pC, cC, diff:cC-pC, diffRate:plDiffRate(pC,cC), pPct:plPct(pd.rev,pC), cPct:plPct(cd.rev,cC) });
-      sp+=pC; sc+=cC; spR+=pd.rev; scR+=cd.rev;
+    var cm = {}, pm = {};
+    fRows.forEach(function(r) {
+      if (r.mon < fromM || r.mon > toM) return;
+      if (r.yr === currYr) {
+        if (!cm[r.mon]) cm[r.mon] = { rev: 0, cost: 0 };
+        if (r._t==='R') cm[r.mon].rev += r.amt;
+      else if (r._t==='C') cm[r.mon].cost += r.amt;
+      }
+      if (r.yr === prevYr) {
+        if (!pm[r.mon]) pm[r.mon] = { rev: 0, cost: 0 };
+        if (r._t==='R') pm[r.mon].rev += r.amt;
+      else if (r._t==='C') pm[r.mon].cost += r.amt;
+      }
+    });
+    var rows = [], totCRev=0, totPRev=0, totCC=0, totPC=0;
+    for (var m = fromM; m <= toM; m++) {
+      var cd = cm[m], pd = pm[m];
+      if (!cd && !pd) continue;
+      var cRev=cd?cd.rev:0, pRev=pd?pd.rev:0;
+      var cC=cRev-(cd?cd.cost:0), pC=pRev-(pd?pd.cost:0);
+      if (cd) { totCRev+=cRev; totCC+=cC; }
+      if (pd) { totPRev+=pRev; totPC+=pC; }
+      rows.push({ label:m+'월', cd:!!cd, pd:!!pd, cRev, pRev, cC, pC });
     }
-    buildYoyComboChart('prod-pl-chart', labels, pA, cA, pP, cP,
-      'rgba(74,144,217,0.5)', 'rgba(67,97,238,0.85)', '#bbb', '#e63946');
-    buildPlTable('prod-pl-tbody', rows, sp, sc);
+    rows.push({ label:'합계', cd:true, pd:true, cRev:totCRev, pRev:totPRev, cC:totCC, pC:totPC, bold:true });
+    tbody.innerHTML = rows.map(plBuildRow).join('');
   } else {
     if (titleEl) titleEl.textContent = '📦 채널별 공헌이익 전년대비 (' + (prevYr||'?') + '→' + (currYr||'?') + '년)';
-    const allChs = [...new Set([...Object.keys(cc), ...Object.keys(pc2)])];
-    const entries = allChs.map(function(ch) {
-      const cd=cc[ch]||{rev:0,cost:0}, pd=pc2[ch]||{rev:0,cost:0};
-      const pC=pd.rev-pd.cost, cC=cd.rev-cd.cost;
-      return { label:ch, pC, cC, diff:cC-pC, diffRate:plDiffRate(pC,cC), pPct:plPct(pd.rev,pC), cPct:plPct(cd.rev,cC) };
-    }).filter(function(e){return e.pC||e.cC;}).sort(function(a,b){return b.cC-a.cC;});
-    buildYoyComboChart('prod-pl-chart', entries.map(function(e){return e.label;}),
-      entries.map(function(e){return Math.round(e.pC/1e6);}),
-      entries.map(function(e){return Math.round(e.cC/1e6);}),
-      entries.map(function(e){return parseFloat(e.pPct.toFixed(1));}),
-      entries.map(function(e){return parseFloat(e.cPct.toFixed(1));}),
-      'rgba(30,184,111,0.4)', 'rgba(30,184,111,0.85)', '#ccc', '#f4a261');
-    buildPlTable('prod-pl-tbody', entries,
-      entries.reduce(function(s,e){return s+e.pC;},0),
-      entries.reduce(function(s,e){return s+e.cC;},0));
+    var cc = {}, pc = {};
+    fRows.forEach(function(r) {
+      if (r.mon < fromM || r.mon > toM) return;
+      if (r.yr === currYr) {
+        if (!cc[r.ch]) cc[r.ch] = { rev: 0, cost: 0 };
+        if (r._t==='R') cc[r.ch].rev += r.amt;
+      else if (r._t==='C') cc[r.ch].cost += r.amt;
+      }
+      if (r.yr === prevYr) {
+        if (!pc[r.ch]) pc[r.ch] = { rev: 0, cost: 0 };
+        if (r._t==='R') pc[r.ch].rev += r.amt;
+      else if (r._t==='C') pc[r.ch].cost += r.amt;
+      }
+    });
+    var allChs = [...new Set([...Object.keys(cc), ...Object.keys(pc)])];
+    var rows2 = [], totCRev2=0, totPRev2=0, totCC2=0, totPC2=0;
+    allChs.forEach(function(ch) {
+      var c=cc[ch]||{rev:0,cost:0}, p=pc[ch]||{rev:0,cost:0};
+      var cC=c.rev-c.cost, pC=p.rev-p.cost;
+      if (cc[ch]) { totCRev2+=c.rev; totCC2+=cC; }
+      if (pc[ch]) { totPRev2+=p.rev; totPC2+=pC; }
+      rows2.push({ label:ch, cd:!!cc[ch], pd:!!pc[ch], cRev:c.rev, pRev:p.rev, cC, pC });
+    });
+    rows2.sort(function(a,b){ return b.cC-a.cC; });
+    rows2.push({ label:'합계', cd:true, pd:true, cRev:totCRev2, pRev:totPRev2, cC:totCC2, pC:totPC2, bold:true });
+    tbody.innerHTML = rows2.map(plBuildRow).join('');
   }
 }
+
 
 function buildPlTable(tbodyId, rows, sumPrev, sumCurr) {
   const tbody = document.getElementById(tbodyId);
@@ -3642,3 +3666,10 @@ function buildPlTable(tbodyId, rows, sumPrev, sumCurr) {
 </script>
 </body>
 </html>
+
+
+
+
+
+
+
