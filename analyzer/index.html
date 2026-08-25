@@ -2275,10 +2275,13 @@ function switchTab(name) {
   document.querySelectorAll('.tab-btn').forEach((btn, i) => {
     btn.classList.toggle('active', names[i] === name);
   });
-  document.querySelectorAll('.tab-pane').forEach(pane => {
-    var isActive = pane.id === 'tab-' + name;
+  var allPaneIds = ['tab-dashboard','tab-monthly','tab-channel','tab-product','tab-store','tab-pl'];
+  allPaneIds.forEach(function(pid) {
+    var pane = document.getElementById(pid);
+    if (!pane) return;
+    var isActive = pid === 'tab-' + name;
     pane.classList.toggle('active', isActive);
-    pane.style.display = isActive ? 'block' : 'none';
+    pane.style.cssText = isActive ? 'display:block!important' : 'display:none!important';
   });
   if (name === 'store') renderStoreTab();
   if (name === 'pl') {
