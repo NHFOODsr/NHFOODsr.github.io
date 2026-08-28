@@ -669,7 +669,7 @@ tbody tr:last-child td { border-bottom: none; font-weight: 700; background: #F4F
 }
 
 .tab-pane { display: none; flex-direction: column; gap: 10px; }
-.tab-pane.active { display: flex; }
+.tab-pane.active { display: flex !important; }
 #tab-pl.active { display: block; }
 
 /* Highlight card */
@@ -1062,7 +1062,7 @@ tr.row-highlight td:first-child { border-left: 3px solid var(--neutral); }
             <h3 style="display:flex;justify-content:space-between;align-items:center;">누계 품목 TOP 5<span id="dash-top5-unit" style="font-size:11px;font-weight:400;color:var(--text-mid);"></span></h3>
             <div class="chart-sub" id="dash-top5-sub">해당기간 금년도 매출 상위 5개 품목</div>
             <table class="data-table">
-              <thead><tr><th>품목명</th><th class="th-prev-year">전년도</th><th class="th-curr-year">금년도</th><th>증감액</th><th>증감률</th><th class="th-annual mode-yoy-only">전년 연간</th></tr></thead>
+              <thead><tr><th id="prod-name-th">품목명</th><th class="th-prev-year">전년도</th><th class="th-curr-year">금년도</th><th>증감액</th><th>증감률</th><th class="th-annual mode-yoy-only">전년 연간</th></tr></thead>
               <tbody id="dash-top5-tbody"></tbody>
             </table>
           </div>
@@ -1146,12 +1146,15 @@ tr.row-highlight td:first-child { border-left: 3px solid var(--neutral); }
           <div class="chart-card">
             <h3 style="display:flex; justify-content:space-between; align-items:center;">
               전체 품목 비교
-              <span style="display:flex;align-items:center;gap:6px;">
-                <span class="click-hint">👆 품목명 클릭 가능</span>
-                <span id="prod-top10-unit" style="font-size:11px; font-weight:400; color:var(--text-mid);"></span>
-              </span>
+              <span id="prod-top10-unit" style="font-size:11px; font-weight:400; color:var(--text-mid);"></span>
             </h3>
-            <div class="chart-sub" id="prod-top10-sub">품목을 클릭하면 상세 분석이 표시됩니다</div>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <div class="chart-sub" id="prod-top10-sub" style="margin-bottom:0;">품목을 클릭하면 상세 분석이 표시됩니다</div>
+              <span style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+                <span class="click-hint" id="prod-click-hint">👆 클릭 가능</span>
+                <button type="button" class="btn-toggle-labels" id="prod-group-btn" onclick="toggleProdGroupBy()">📂 세분류 보기</button>
+              </span>
+            </div>
             <table class="data-table">
               <thead><tr><th>품목명</th><th class="th-prev-year">전년도</th><th class="th-curr-year">금년도</th><th>증감액</th><th>증감률</th><th class="th-annual mode-yoy-only">전년 연간</th></tr></thead>
               <tbody id="prod-top10-tbody"></tbody>
@@ -1189,9 +1192,10 @@ tr.row-highlight td:first-child { border-left: 3px solid var(--neutral); }
         </div>
 
 
+            </div><!-- /tab-product -->
+
       <!-- ── Tab 5: 입점매장 분석 ── -->
       <div class="tab-pane" id="tab-store">
-        <div style="background:red;color:white;padding:10px;font-weight:bold">★ TAB-STORE 표시 테스트 ★</div>
         <div class="chart-card">
           <h3 style="display:flex;justify-content:space-between;align-items:center;">
             입점매장 분석
@@ -2204,15 +2208,19 @@ function toggleLabels() {
 }
 function switchTab(name) {
   const names = ['dashboard', 'monthly', 'channel', 'product', 'store'];
-  document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+  const ids   = ['tab-dashboard','tab-monthly','tab-channel','tab-product','tab-store'];
+  document.querySelectorAll('.tab-btn').forEach(function(btn, i) {
     btn.classList.toggle('active', names[i] === name);
   });
-  ['tab-dashboard','tab-monthly','tab-channel','tab-product','tab-store'].forEach(function(pid) {
-    var pane = document.getElementById(pid);
-    var isActive = pid === 'tab-' + name;
-    if (pane) {
-      pane.classList.toggle('active', isActive);
-      pane.style.setProperty('display', isActive ? 'flex' : 'none', 'important');
+  ids.forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (id === 'tab-' + name) {
+      el.classList.add('active');
+      el.style.cssText = 'display:flex!important;flex-direction:column;gap:10px;';
+    } else {
+      el.classList.remove('active');
+      el.style.cssText = 'display:none!important;';
     }
   });
   if (name === 'store') renderStoreTab();
@@ -2642,7 +2650,7 @@ function fillChannelTable(tbodyId, prevCh, currCh, channels, metric, annualCh, o
   tbody.appendChild(totalTr);
 }
 
-function fillProductTop10Table(tbodyId, currTop10, prevValFn, metric, annualValFn) {
+function fillProductTop10Table(tbodyId, currTop10, prevValFn, metric, annualValFn, clickable = true) {
   const tbody = document.getElementById(tbodyId);
   if (!tbody) return;
   tbody.innerHTML = '';
@@ -2656,33 +2664,74 @@ function fillProductTop10Table(tbodyId, currTop10, prevValFn, metric, annualValF
     tr.className = 'prod-row';
     tr.setAttribute('data-name', name);
     tr.innerHTML = `<td>${name}</td><td>${formatNumNoUnit(pVal,metric)}</td><td>${formatNumNoUnit(cVal,metric)}</td><td class="${diff>=0?'change-pos':'change-neg'}">${(diff>=0?'+':'')+formatNumNoUnit(diff,metric)}</td><td class="${rate>=0?'change-pos':'change-neg'}">${(rate>=0?'+':'')+rate.toFixed(1)}%</td>${annualValFn ? `<td class="mode-yoy-only">${formatNumNoUnit(annualValFn(name),metric)}</td>` : ''}`;
-    tr.addEventListener('click', () => renderProductDetail(name));
+    tr.style.cursor = 'pointer';
+    tr.addEventListener('click', () => {
+      if (state.prodGroupBy === 'p4') renderProductDetailByP4(name);
+      else renderProductDetail(name);
+    });
     tbody.appendChild(tr);
   });
 }
 
 // 품목별 상세분석 탭: "전체 품목 비교" 표 — 금년도 매출액 기준 내림차순으로 전 품목을 페이지네이션(◁▷)으로 보여준다
 const PRODUCT_PAGE_SIZE = 10;
+function toggleProdGroupBy() {
+  state.prodGroupBy = (state.prodGroupBy === 'p4') ? 'sku' : 'p4';
+  const isP4 = state.prodGroupBy === 'p4';
+  const btn = document.getElementById('prod-group-btn');
+  if (btn) { btn.textContent = isP4 ? '📋 품목별 보기' : '📂 세분류 보기'; btn.classList.toggle('active', isP4); }
+  const hint = document.getElementById('prod-click-hint');
+  if (hint) hint.style.display = isP4 ? 'none' : '';
+  const th = document.getElementById('prod-name-th');
+  if (th) th.textContent = isP4 ? '세분류' : '품목명';
+  renderProductTop();
+}
+
 function renderProductTop() {
   const { currFiltered, fromM, cmpToM, metric } = state;
   if (!currFiltered) return;
-  state.productAllTop = topProductsByPeriod(currFiltered, fromM, cmpToM, metric, Infinity);
+  const isP4 = state.prodGroupBy === 'p4';
+  state.productAllTop = topProductsByKey(currFiltered, fromM, cmpToM, metric, isP4 ? C.P4 : C.NAME);
   state.productPage = 0;
   renderProductPage();
-  if (state.productAllTop.length > 0) renderProductDetail(state.productAllTop[0].name);
+  if (state.productAllTop.length > 0) {
+    if (isP4) renderProductDetailByP4(state.productAllTop[0].name);
+    else renderProductDetail(state.productAllTop[0].name);
+  }
 }
 function renderProductPage() {
-  const { productAllTop, prevPeriodMap, prevAnnualByProduct, metric } = state;
+  const { productAllTop, prevPeriodMap, prevFiltered, prevAnnualByProduct, metric, fromM, cmpToM } = state;
   if (!productAllTop) return;
   const totalPages = Math.max(1, Math.ceil(productAllTop.length / PRODUCT_PAGE_SIZE));
   state.productPage = Math.min(Math.max(0, state.productPage), totalPages - 1);
   const start = state.productPage * PRODUCT_PAGE_SIZE;
   const pageItems = productAllTop.slice(start, start + PRODUCT_PAGE_SIZE);
 
+  const isP4 = state.prodGroupBy === 'p4';
+  let prevFn, annualFn;
+  if (isP4 && prevFiltered) {
+    const prevP4Map = {};
+    const prevP4AnnualMap = {};
+    prevFiltered.forEach(r => {
+      const key = r[C.P4] ? String(r[C.P4]).trim() : null;
+      if (!key) return;
+      let tot = 0, annual = 0;
+      for (let mo = fromM; mo <= cmpToM; mo++) tot += rowMonthVal(r, mo, metric);
+      for (let mo = 1; mo <= 12; mo++) annual += rowMonthVal(r, mo, metric);
+      prevP4Map[key] = (prevP4Map[key] || 0) + tot;
+      prevP4AnnualMap[key] = (prevP4AnnualMap[key] || 0) + annual;
+    });
+    prevFn = name => prevP4Map[name] || 0;
+    annualFn = name => prevP4AnnualMap[name] || 0;
+  } else {
+    prevFn = name => prevPeriodMap[name] || 0;
+    annualFn = prevAnnualByProduct && (name => prevAnnualByProduct[name] || 0);
+  }
+
   document.getElementById('prod-top10-sub').textContent = productAllTop.length > 0
     ? `금년도 매출액 기준 내림차순 · ${start + 1}~${start + pageItems.length}위 (전체 ${productAllTop.length}개)`
     : '검색 결과가 없습니다';
-  fillProductTop10Table('prod-top10-tbody', pageItems, name => prevPeriodMap[name] || 0, metric, prevAnnualByProduct && (name => prevAnnualByProduct[name] || 0));
+  fillProductTop10Table('prod-top10-tbody', pageItems, prevFn, metric, annualFn, !isP4);
 
   document.getElementById('prod-pager-label').textContent = `${state.productPage + 1} / ${totalPages}`;
   document.getElementById('prod-pager-prev').disabled = state.productPage <= 0;
@@ -2814,6 +2863,76 @@ function renderStoreTab() {
     `${fromM}~${cmpToM}월 누계 · 매출 발생 ${items.length}개 품목 · 계통 입점매장수 기준 내림차순`;
 }
 
+function renderProductDetailByP4(p4name) {
+  const { prevFiltered, currFiltered, fromM, toM, metric, py, cy } = state;
+  const cmpToM = state.cmpToM == null ? toM : state.cmpToM;
+  if (!prevFiltered || !currFiltered) return;
+
+  // 해당 세분류에 속한 모든 행 합산
+  const prevProdRows = prevFiltered.filter(r => (r[C.P4] ? String(r[C.P4]).trim() : '') === p4name);
+  const currProdRows = currFiltered.filter(r => (r[C.P4] ? String(r[C.P4]).trim() : '') === p4name);
+
+  const prevM = sumMonthly(prevProdRows, fromM, toM, metric);
+  const currM = sumMonthly(currProdRows, fromM, cmpToM, metric);
+  const months = [];
+  const pVals = [], cVals = [];
+  for (let m = fromM; m <= toM; m++) {
+    months.push(m + '월');
+    pVals.push(prevM[m] || 0);
+    cVals.push(m > cmpToM ? null : (currM[m] || 0));
+  }
+
+  const prevCh = sumByChannel(prevProdRows, fromM, cmpToM, metric);
+  const currCh = sumByChannel(currProdRows, fromM, cmpToM, metric);
+  const allChs = [...new Set([...Object.keys(prevCh), ...Object.keys(currCh)])].sort((a, b) => (currCh[b] || 0) - (currCh[a] || 0));
+
+  // 선택 행 하이라이트
+  document.querySelectorAll('#prod-top10-tbody tr.prod-row').forEach(r => r.classList.remove('prod-selected'));
+  document.querySelectorAll('#prod-top10-tbody tr.prod-row').forEach(r => {
+    if (r.getAttribute('data-name') === p4name) r.classList.add('prod-selected');
+  });
+
+  const shortName = p4name.length > 18 ? p4name.slice(0, 18) + '…' : p4name;
+  document.getElementById('prod-m-title').textContent = `[세분류] ${shortName} — 월별 추이`;
+  document.getElementById('prod-m-sub').textContent = `${py} vs ${cy} 월별 ${metric === 'amt' ? '매출액' : '판매수량'}`;
+  document.getElementById('prod-c-title').textContent = `[세분류] ${shortName} — 채널별 비교`;
+  document.getElementById('prod-c-sub').textContent = `${py} vs ${cy} 채널별 ${metric === 'amt' ? '매출액' : '판매수량'}`;
+  document.getElementById('prod-m-leg-prev').textContent = py;
+  document.getElementById('prod-m-leg-curr').textContent = cy;
+  document.getElementById('prod-c-leg-prev').textContent = py;
+  document.getElementById('prod-c-leg-curr').textContent = cy;
+
+  mkChart('prodMonthly', document.getElementById('prod-m-chart').getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: months,
+      datasets: buildLineSeries(py, pVals, 'rgba(74,144,217,1)', 'rgba(74,144,217,0.08)', cy, cVals, 'rgba(30,184,111,1)', 'rgba(30,184,111,0.08)', state.collectingIdx)
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 20 } },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${formatNum(ctx.parsed.y, metric)}` } }, rateLabels: isRealtimeMode() ? undefined : { showValues: true, metric: metric }, collectingLabel: isRealtimeMode() ? { index: state.collectingIdx } : undefined },
+      scales: { x: { grid: { display: false }, ticks: { font: { size: 10 } } }, y: { grid: { color: '#EEF2F7' }, ticks: { font: { size: 10 }, callback: v => shortNum(v, metric) } } }
+    }
+  });
+
+  const prodChPrevVals = allChs.map(c => prevCh[c] || 0);
+  const prodChCurrVals = allChs.map(c => currCh[c] || 0);
+  mkChart('prodChannel', document.getElementById('prod-c-chart').getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: allChs,
+      datasets: buildBarSeries(py, prodChPrevVals, 'rgba(74,144,217,0.75)', cy, prodChCurrVals, 'rgba(30,184,111,0.75)')
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      layout: { padding: { top: 20 } },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${formatNum(ctx.parsed.y, metric)}` } }, rateLabels: { rates: pctRateArray(prodChPrevVals, prodChCurrVals) } },
+      scales: { x: { grid: { display: false }, ticks: { font: { size: 9 }, maxRotation: 0, minRotation: 0, autoSkip: false, callback: channelTickCallback } }, y: { grid: { color: '#EEF2F7' }, ticks: { font: { size: 10 }, callback: v => shortNum(v, metric) } } }
+    }
+  });
+}
+
 function renderProductDetail(name) {
   const { prevFiltered, currFiltered, fromM, toM, metric, py, cy } = state;
   const cmpToM = state.cmpToM == null ? toM : state.cmpToM;
@@ -2898,6 +3017,19 @@ function topProductsByPeriod(rows, fromM, toM, metric, n) {
     map[name] = (map[name] || 0) + tot;
   });
   return Object.entries(map).sort((a, b) => b[1] - a[1]).slice(0, n || 5).map(([name, val]) => ({ name, val }));
+}
+
+// 세분류 등 임의 컬럼 기준 집계 (n=Infinity 가능)
+function topProductsByKey(rows, fromM, toM, metric, keyCol) {
+  const map = {};
+  rows.forEach(r => {
+    const key = r[keyCol] ? String(r[keyCol]).trim() : null;
+    if (!key) return;
+    let tot = 0;
+    for (let m = fromM; m <= toM; m++) tot += rowMonthVal(r, m, metric);
+    map[key] = (map[key] || 0) + tot;
+  });
+  return Object.entries(map).sort((a, b) => b[1] - a[1]).map(([name, val]) => ({ name, val }));
 }
 
 function topProductsByMonth(rows, month, metric, n) {
@@ -3090,25 +3222,24 @@ function fetchStoreMap() {
 // ─────────────────────────────────────────────────
 // 신규 기능 업데이트 팝업 — 버전을 올리고 items를 채우면, 그 버전을 아직 못 본 사용자에게 한 번 뜬다
 const APP_UPDATE = {
-  version: '2026-08-03-store-tab-3',
-  date: '2026.08.03',
+  version: '2026-08-26-p4-groupby',
+  date: '2026.08.26',
   items: [
-    '[입점매장 분석] 탭 추가',
-    '[품목별 상세분석] 탭에서 전 품목 조회 가능(페이지 넘김 형태)'
+    '[품목별 상세분석] 탭 : 세분류 보기 업데이트'
   ]
 };
 function checkUpdateModal() {
   if (!APP_UPDATE.items.length) return;
   var seen = null;
   try { seen = localStorage.getItem('nhfood_seen_update'); } catch (_) {}
-  if (seen === 'true') return;
+  if (seen === APP_UPDATE.version) return;
   document.getElementById('update-modal-date').textContent = APP_UPDATE.date;
   document.getElementById('update-modal-list').innerHTML = APP_UPDATE.items.map(function(t) { return '<li>' + t + '</li>'; }).join('');
   document.getElementById('update-overlay').classList.remove('hidden');
 }
 function closeUpdateModal() {
   document.getElementById('update-overlay').classList.add('hidden');
-  try { localStorage.setItem('nhfood_seen_update', 'true'); } catch (_) {}
+  try { localStorage.setItem('nhfood_seen_update', APP_UPDATE.version); } catch (_) {}
 }
 
 // 저장된 파일 복원 (data.json 자동 fetch → 실패 시 IndexedDB 폴백)
