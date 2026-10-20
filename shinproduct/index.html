@@ -1155,9 +1155,22 @@ function renderStoreTab() {
       var ketFn = function(r) { return r[COL.CH중] === '계통대리점'; };
       ketCell = isQtyMode ? qtySpan(sumQty(codeSet, ketFn)) : amtSpan(sumAmount(codeSet, ketFn));
     } else {
-      var storeCount = codes.reduce(function(s, code) {
-        return s + (storeData[String(code).trim()] || 0);
-      }, 0);
+      var storeCount;
+      if (codes.length > 1 && window.__STORE_BY_AGENCY__) {
+        // 품목(여러 SKU): 대리점별로 SKU 중 최대 입점매장수만 취해 중복 입점매장을 제외
+        var agencyMax = {};
+        codes.forEach(function(code) {
+          var byAg = window.__STORE_BY_AGENCY__[String(code).trim()] || {};
+          Object.keys(byAg).forEach(function(ag) {
+            if (byAg[ag] > (agencyMax[ag] || 0)) agencyMax[ag] = byAg[ag];
+          });
+        });
+        storeCount = Object.keys(agencyMax).reduce(function(s, ag) { return s + agencyMax[ag]; }, 0);
+      } else {
+        storeCount = codes.reduce(function(s, code) {
+          return s + (storeData[String(code).trim()] || 0);
+        }, 0);
+      }
       ketCell = storeCount > 0
         ? '<span style="font-weight:700;color:var(--primary)">' + storeCount.toLocaleString() + '</span>'
         : '<span style="color:var(--text-light)">-</span>';
