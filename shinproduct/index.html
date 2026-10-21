@@ -10,6 +10,7 @@
 <script src="./data.js" onerror="window.__SALES_DATA__=null"></script>
 <script src="./master.js" onerror="window.__MASTER_DATA__=null"></script>
 <script src="./store.js" onerror="window.__STORE_DATA__=null"></script>
+<script src="./store-sales.js" onerror="window.__STORE_SALES__=null"></script>
 <script src="./data-prevweek.js" onerror="window.__PREVWEEK_DATA__=null"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -1126,7 +1127,7 @@ function renderStoreTab() {
   // ── 헤더 ─────────────────────────────────────────────
   var ketColLabel = storeAmountMode
     ? ('계통<br>' + (isQtyMode ? '판매수량' : '매출액'))
-    : '계통<br>입점수';
+    : '<span title="' + (window.__STORE_SALES__ ? window.__STORE_SALES__.from + ' ~ ' + window.__STORE_SALES__.to + ' 매출 발생 계통 매장 (품목 내 중복 제외)' : 'ERP 입점현황 기준') + '">계통<br>입점수</span>';
 
   var grpHead =
     '<th rowspan="2" class="stn" style="background:var(--primary);color:white;z-index:5;padding:8px 12px;text-align:center">품목</th>' +
@@ -1156,16 +1157,14 @@ function renderStoreTab() {
       ketCell = isQtyMode ? qtySpan(sumQty(codeSet, ketFn)) : amtSpan(sumAmount(codeSet, ketFn));
     } else {
       var storeCount;
-      if (codes.length > 1 && window.__STORE_BY_AGENCY__) {
-        // 품목(여러 SKU): 대리점별로 SKU 중 최대 입점매장수만 취해 중복 입점매장을 제외
-        var agencyMax = {};
+      var ssales = window.__STORE_SALES__;
+      if (ssales && ssales.byCode) {
+        // 연초부터 매출내역 기준: 품목 내 SKU 중 하나라도 매출이 발생한 계통 매장을 중복 없이 센다
+        var storeSet = {};
         codes.forEach(function(code) {
-          var byAg = window.__STORE_BY_AGENCY__[String(code).trim()] || {};
-          Object.keys(byAg).forEach(function(ag) {
-            if (byAg[ag] > (agencyMax[ag] || 0)) agencyMax[ag] = byAg[ag];
-          });
+          (ssales.byCode[String(code).trim()] || []).forEach(function(ci) { storeSet[ci] = 1; });
         });
-        storeCount = Object.keys(agencyMax).reduce(function(s, ag) { return s + agencyMax[ag]; }, 0);
+        storeCount = Object.keys(storeSet).length;
       } else {
         storeCount = codes.reduce(function(s, code) {
           return s + (storeData[String(code).trim()] || 0);
