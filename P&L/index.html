@@ -2650,7 +2650,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 // ────────────────────────────────────────────────────
 // 품목별 채널별 탭
-const prodchS = { prod: null, page: 0 };
+const prodchS = { prod: null, page: 0, d1: '판매사업' };
 
 function renderProdchTab() {
   if (typeof MDATA === 'undefined') return;
@@ -2658,17 +2658,30 @@ function renderProdchTab() {
   const {fm, tm} = _getFromTo();
   const ms = isCumul ? Array.from({length:tm-fm+1},(_,i)=>fm+i) : [tm];
 
-  const prods = Object.keys(MDATA).map(function(p) {
-    var s26 = ms.reduce(function(t,m) {
-      var d = MDATA[p] && MDATA[p]['전체'] && MDATA[p]['전체']['26'];
-      return t + (d && d[String(m)] ? d[String(m)][0] : 0);
+  var _d1 = prodchS.d1 || '판매사업';
+  const prods = Object.keys(MDATA).filter(function(p) {
+    return MDATA[p] && MDATA[p][_d1] && MDATA[p][_d1]['26'];
+  }).map(function(p) {
+    var yr = MDATA[p][_d1]['26'];
+    var s26 = Object.keys(yr).reduce(function(t,m) {
+      return t + (yr[m] ? yr[m][0] : 0);
     }, 0);
     return {name: p, s26: s26};
-  }).sort(function(a,b){return b.s26-a.s26;});
+  }).filter(function(x){return x.s26>0;}).sort(function(a,b){return b.s26-a.s26;});
 
   var listEl = document.getElementById('prodch-list');
   if (!listEl) return;
-  var html = '';
+  var isSale = _d1 === '판매사업';
+  var saleSt = isSale
+    ? 'flex:1;padding:3px 0;font-size:10px;border:1px solid #1B3D6F;border-radius:3px;cursor:pointer;font-weight:600;background:#1B3D6F;color:#fff;font-family:inherit;'
+    : 'flex:1;padding:3px 0;font-size:10px;border:1px solid #C5D5E4;border-radius:3px;cursor:pointer;background:transparent;color:#4D6278;font-family:inherit;';
+  var simpSt = !isSale
+    ? 'flex:1;padding:3px 0;font-size:10px;border:1px solid #1B3D6F;border-radius:3px;cursor:pointer;font-weight:600;background:#1B3D6F;color:#fff;font-family:inherit;'
+    : 'flex:1;padding:3px 0;font-size:10px;border:1px solid #C5D5E4;border-radius:3px;cursor:pointer;background:transparent;color:#4D6278;font-family:inherit;';
+  var html = '<div style="display:flex;gap:3px;margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--border);">'
+    + '<button style="' + saleSt + '" onclick="setProdchD1(\'판매사업\')">판매</button>'
+    + '<button style="' + simpSt + '" onclick="setProdchD1(\'단순판매\')">단순</button>'
+    + '</div>';
   prods.forEach(function(p) {
     var isActive = prodchS.prod === p.name;
     var esc = p.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
@@ -2679,6 +2692,22 @@ function renderProdchTab() {
   listEl.innerHTML = html;
 
   if (prodchS.prod) _drawProdchTable();
+}
+
+function setProdchD1(d1) {
+  prodchS.d1 = d1;
+  prodchS.prod = null;
+  prodchS.page = 0;
+  var dd = document.getElementById('prodch-detail');
+  var eh = document.getElementById('prodch-empty-hint');
+  // 오른쪽 패널 초기화
+  if (dd) {
+    var tw = document.getElementById('prodch-table-wrap');
+    var pe = document.getElementById('prodch-empty');
+    if (tw) tw.style.display = 'none';
+    if (pe) pe.style.display = 'flex';
+  }
+  renderProdchTab();
 }
 
 function selectProdch(prodName) {
