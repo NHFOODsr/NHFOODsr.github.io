@@ -2846,19 +2846,19 @@ function _drawProdchTable() {
     {key:'cogs',  label:'매출원가', indent:1},
     {key:'rate_cogs', label:'원가율', indent:1, isPct:true},
     {key:'sf',    label:'판매경비', indent:1, isGrp:true},
-    {key:'03. 지급수수료', label:'지급수수료', indent:2},
-    {key:'04. 운반비',    label:'운반비',    indent:2},
-    {key:'05. 판매촉진비',label:'판매촉진비',indent:2},
-    {key:'06. 견본비',    label:'견본비',    indent:2},
-    {key:'07. 대손상각비',label:'대손상각비',indent:2},
-    {key:'08. 기타판매비',label:'기타판매비',indent:2},
-    {key:'09. 배달비',    label:'배달비',    indent:2},
+    {key:'03. 지급수수료',          label:'지급수수료',         indent:2},
+    {key:'04. 시장개척비',          label:'시장개척비',         indent:2},
+    {key:'05. 시험개발비',          label:'시험개발비',         indent:2},
+    {key:'06. 운반비',              label:'운반비',             indent:2},
+    {key:'07. 선전광고료',          label:'선전광고료',         indent:2},
+    {key:'08. 용역비',              label:'용역비',             indent:2},
+    {key:'09. 전자상거래지급수수료', label:'전자상거래지급수수료', indent:2},
     {key:'contrib',      label:'공헌이익', indent:0, bold:true, isAmtDiff:true},
     {key:'rate_contrib', label:'공헌이익율', indent:1, isPct:true},
-    {key:'mk',    label:'마케팅비', indent:1},
-    {key:'mg',    label:'관리비',   indent:1},
-    {key:'oi',    label:'영업이익', indent:0, bold:true},
-    {key:'oe',    label:'영업외손익', indent:1},
+    {key:'mk',    label:'마케팅부 판관비',   indent:1},
+    {key:'mg',    label:'경영지원부 판관비', indent:1},
+    {key:'oi',    label:'영업외수익', indent:1},
+    {key:'oe',    label:'영업외비용', indent:1},
     {key:'net',   label:'당기순이익', indent:0, bold:true, isAmtDiff:true},
     {key:'rate_net', label:'당기순이익율', indent:1, isPct:true}
   ];
@@ -2885,14 +2885,14 @@ function _drawProdchTable() {
       else if (row.key==='rate_contrib'){v26=s26?cc26/s26:null;v25=s25?cc25/s25:null;}
       else if (row.key==='cogs'){v26=getAcct('02. 매출원가','26')*wgt26*chWgt26;v25=getAcct('02. 매출원가','25')*wgt25*chWgt25;}
       else if (row.key==='rate_cogs'){var a26=getAcct('02. 매출원가','26')*wgt26*chWgt26;var a25=getAcct('02. 매출원가','25')*wgt25*chWgt25;v26=s26?a26/s26:null;v25=s25?a25/s25:null;}
-      else if (row.key==='sf'){['03. 지급수수료','04. 운반비','05. 판매촉진비','06. 견본비','07. 대손상각비','08. 기타판매비','09. 배달비'].forEach(function(ak){v26=(v26||0)+getAcct(ak,'26')*wgt26*chWgt26;v25=(v25||0)+getAcct(ak,'25')*wgt25*chWgt25;});}
+      else if (row.key==='sf'){['03. 지급수수료','04. 시장개척비','05. 시험개발비','06. 운반비','07. 선전광고료','08. 용역비','09. 전자상거래지급수수료'].forEach(function(ak){v26=(v26||0)+getAcct(ak,'26')*wgt26*chWgt26;v25=(v25||0)+getAcct(ak,'25')*wgt25*chWgt25;});}
       else if (row.key.match(/^0[3-9]/)){v26=getAcct(row.key,'26')*wgt26*chWgt26;v25=getAcct(row.key,'25')*wgt25*chWgt25;}
-      else if (row.key==='mk'){v26=getAcct('10. 마케팅비','26')*wgt26*chWgt26;v25=getAcct('10. 마케팅비','25')*wgt25*chWgt25;}
-      else if (row.key==='mg'){v26=getAcct('11. 관리비','26')*wgt26*chWgt26;v25=getAcct('11. 관리비','25')*wgt25*chWgt25;}
-      else if (row.key==='oi'){v26=getAcct('12. 영업이익','26')*wgt26*chWgt26;v25=getAcct('12. 영업이익','25')*wgt25*chWgt25;}
-      else if (row.key==='oe'){v26=getAcct('13. 영업외손익','26')*wgt26*chWgt26;v25=getAcct('13. 영업외손익','25')*wgt25*chWgt25;}
-      else if (row.key==='net'){v26=(getAcct('12. 영업이익','26')+getAcct('13. 영업외손익','26'))*wgt26*chWgt26;v25=(getAcct('12. 영업이익','25')+getAcct('13. 영업외손익','25'))*wgt25*chWgt25;}
-      else if (row.key==='rate_net'){var n26=(getAcct('12. 영업이익','26')+getAcct('13. 영업외손익','26'))*wgt26*chWgt26;var n25=(getAcct('12. 영업이익','25')+getAcct('13. 영업외손익','25'))*wgt25*chWgt25;v26=s26?n26/s26:null;v25=s25?n25/s25:null;}
+      else if (row.key==='mk'){v26=getAcct('10. 마케팅부 판관비','26')*wgt26*chWgt26;v25=getAcct('10. 마케팅부 판관비','25')*wgt25*chWgt25;}
+      else if (row.key==='mg'){v26=getAcct('11. 경영지원부 판관비','26')*wgt26*chWgt26;v25=getAcct('11. 경영지원부 판관비','25')*wgt25*chWgt25;}
+      else if (row.key==='oi'){v26=getAcct('12. 영업외수익','26')*wgt26*chWgt26;v25=getAcct('12. 영업외수익','25')*wgt25*chWgt25;}
+      else if (row.key==='oe'){v26=getAcct('13. 영업외비용','26')*wgt26*chWgt26;v25=getAcct('13. 영업외비용','25')*wgt25*chWgt25;}
+      else if (row.key==='net'){var oi26w=getAcct('12. 영업외수익','26')*wgt26*chWgt26;var oe26w=getAcct('13. 영업외비용','26')*wgt26*chWgt26;v26=cc26-getAcct('10. 마케팅부 판관비','26')*wgt26*chWgt26-getAcct('11. 경영지원부 판관비','26')*wgt26*chWgt26+oi26w-oe26w;var oi25w=getAcct('12. 영업외수익','25')*wgt25*chWgt25;var oe25w=getAcct('13. 영업외비용','25')*wgt25*chWgt25;v25=cc25-getAcct('10. 마케팅부 판관비','25')*wgt25*chWgt25-getAcct('11. 경영지원부 판관비','25')*wgt25*chWgt25+oi25w-oe25w;}
+      else if (row.key==='rate_net'){var oi26w2=getAcct('12. 영업외수익','26')*wgt26*chWgt26;var oe26w2=getAcct('13. 영업외비용','26')*wgt26*chWgt26;var n26=cc26-getAcct('10. 마케팅부 판관비','26')*wgt26*chWgt26-getAcct('11. 경영지원부 판관비','26')*wgt26*chWgt26+oi26w2-oe26w2;var oi25w2=getAcct('12. 영업외수익','25')*wgt25*chWgt25;var oe25w2=getAcct('13. 영업외비용','25')*wgt25*chWgt25;var n25=cc25-getAcct('10. 마케팅부 판관비','25')*wgt25*chWgt25-getAcct('11. 경영지원부 판관비','25')*wgt25*chWgt25+oi25w2-oe25w2;v26=s26?n26/s26:null;v25=s25?n25/s25:null;}
 
       if (row.isPct) {
         var diff = (v26!=null&&v25!=null) ? v26-v25 : null;
