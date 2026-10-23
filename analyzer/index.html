@@ -2087,13 +2087,13 @@ function renderDashboardTable() {
     {key:'07. 선전광고료',         label:'선전광고료',         indent:2},
     {key:'08. 용역비',             label:'용역비',             indent:2},
     {key:'09. 전자상거래지급수수료', label:'전자상거래지급수수료', indent:2},
-    {key:'contrib',      label:'공헌이익',                indent:0, bold:true},
+    {key:'contrib',      label:'공헌이익',                indent:0, bold:true, isAmtDiff:true},
     {key:'rate_contrib', label:'공헌이익율',               indent:1, isPct:true, amtKey:'contrib'},
     {key:'mk',           label:'마케팅부 판관비',           indent:1},
     {key:'mg',           label:'경영지원부 판관비',         indent:1},
     {key:'oi',           label:'영업외수익',                indent:1},
     {key:'oe',           label:'영업외비용',                indent:1},
-    {key:'net',          label:'당기순이익',                indent:0, bold:true},
+    {key:'net',          label:'당기순이익',                indent:0, bold:true, isAmtDiff:true},
     {key:'rate_net',     label:'당기순이익율',              indent:1, isPct:true, amtKey:'net'},
   ];
 
@@ -2149,7 +2149,13 @@ function renderDashboardTable() {
         }
       } else {
         const g=(v25&&v25!==0)?(v26-v25)/Math.abs(v25):null;
-        rh+=td(_fmtM(v26))+td(_fmtM(v25),'color:#8A9BB0;')+td(_fmtGrow(g,true),_col(g));
+        if (row.isAmtDiff) {
+          const d=v26-v25;
+          const dfmt=d>0?'▲'+_fmtM(d):(d<0?'▼'+_fmtM(-d):'0');
+          rh+=td(_fmtM(v26))+td(_fmtM(v25),'color:#8A9BB0;')+td(dfmt,_col(d));
+        } else {
+          rh+=td(_fmtM(v26))+td(_fmtM(v25),'color:#8A9BB0;')+td(_fmtGrow(g,true),_col(g));
+        }
       }
     }
     h+=rh+'</tr>';
