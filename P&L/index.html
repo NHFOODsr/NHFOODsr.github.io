@@ -312,6 +312,10 @@ tfoot td { font-weight: 700; background: #F4F8FD; border-top: 1px solid var(--bo
   animation: spin 0.8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+@keyframes prodch-spin { to { transform: rotate(360deg); } }
+.prodch-step-spinner { border:2px solid #C5D5E4; border-top-color:#1B3D6F; border-radius:50%; width:18px; height:18px; animation:prodch-spin 0.8s linear infinite; display:inline-block; }
+.prodch-step-done { background:#27AE60; color:#fff; border-radius:50%; width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; font-size:10px; font-weight:700; }
 </style>
 </head>
 <body>
@@ -590,6 +594,22 @@ tfoot td { font-weight: 700; background: #F4F8FD; border-top: 1px solid var(--bo
                   <button class="pg-btn" id="prodch-pg-prev" onclick="moveProdchPage(-1)">◀</button>
                   <span id="prodch-pg-info" style="font-size:11px;color:var(--text-mid);padding:0 4px;"></span>
                   <button class="pg-btn" id="prodch-pg-next" onclick="moveProdchPage(1)">▶</button>
+                </div>
+              </div>
+              <div id="prodch-loading" style="display:none;padding:40px 20px;text-align:center;">
+                <div style="display:inline-flex;flex-direction:column;align-items:flex-start;gap:10px;">
+                  <div id="prodch-step-1" style="display:flex;align-items:center;gap:10px;color:#9BAABB;font-size:12px;">
+                    <span id="prodch-step-1-icon" style="width:18px;height:18px;border-radius:50%;border:2px solid #C5D5E4;display:inline-block;flex-shrink:0;"></span>
+                    데이터 조회 중
+                  </div>
+                  <div id="prodch-step-2" style="display:flex;align-items:center;gap:10px;color:#9BAABB;font-size:12px;">
+                    <span id="prodch-step-2-icon" style="width:18px;height:18px;border-radius:50%;border:2px solid #C5D5E4;display:inline-block;flex-shrink:0;"></span>
+                    채널 집계 중
+                  </div>
+                  <div id="prodch-step-3" style="display:flex;align-items:center;gap:10px;color:#9BAABB;font-size:12px;">
+                    <span id="prodch-step-3-icon" style="width:18px;height:18px;border-radius:50%;border:2px solid #C5D5E4;display:inline-block;flex-shrink:0;"></span>
+                    표 렌더링 중
+                  </div>
                 </div>
               </div>
               <div style="overflow-x:auto;">
@@ -2715,9 +2735,45 @@ function selectProdch(prodName) {
   prodchS.page = 0;
   var eh = document.getElementById('prodch-empty-hint');
   var dd = document.getElementById('prodch-detail');
+  var loading = document.getElementById('prodch-loading');
+  var tblWrap = document.querySelector('#prodch-detail .chart-card > div[style*="overflow-x"]');
   if (eh) eh.style.display = 'none';
   if (dd) dd.style.display = 'block';
+  // 로딩 표시
+  if (loading) loading.style.display = 'block';
+  if (tblWrap) tblWrap.style.visibility = 'hidden';
+  _setProdchStep(0);
   renderProdchTab();
+  setTimeout(function() {
+    _setProdchStep(1);
+    setTimeout(function() {
+      _setProdchStep(2);
+      setTimeout(function() {
+        _setProdchStep(3);
+        _drawProdchTable();
+        if (loading) loading.style.display = 'none';
+        if (tblWrap) tblWrap.style.visibility = 'visible';
+      }, 120);
+    }, 120);
+  }, 50);
+}
+function _setProdchStep(active) {
+  for (var i = 1; i <= 3; i++) {
+    var icon = document.getElementById('prodch-step-' + i + '-icon');
+    var row = document.getElementById('prodch-step-' + i);
+    if (!icon || !row) continue;
+    if (i < active) {
+      icon.className = 'prodch-step-done'; icon.textContent = '✓'; icon.style.cssText = '';
+      row.style.color = '#27AE60';
+    } else if (i === active) {
+      icon.className = 'prodch-step-spinner'; icon.textContent = ''; icon.style.cssText = '';
+      row.style.color = '#1B3D6F'; row.style.fontWeight = '600';
+    } else {
+      icon.className = ''; icon.style.cssText = 'width:18px;height:18px;border-radius:50%;border:2px solid #C5D5E4;display:inline-block;flex-shrink:0;';
+      icon.textContent = '';
+      row.style.color = '#9BAABB'; row.style.fontWeight = 'normal';
+    }
+  }
 }
 
 function moveProdchPage(dir) {
@@ -2836,7 +2892,7 @@ function _drawProdchTable() {
   h += '</tr><tr>';
   showChs.forEach(function(ch, ci) {
     var isBdr = ci < showChs.length-1;
-    h += '<th style="'+thSt+'">26년</th><th style="'+thSt+'color:#8A9BB0;">25년</th><th style="'+thSt+(isBdr?bdr:'')+'">성장</th>';
+    h += '<th style="'+thSt+'">26년</th><th style="'+thSt+'color:#8A9BB0;">25년</th><th style="'+thSt+(isBdr?bdr:'')+'">성장/증감</th>';
   });
   h += '</tr></thead><tbody>';
 
