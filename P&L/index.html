@@ -2705,7 +2705,7 @@ function renderProdchTab() {
   prods.forEach(function(p) {
     var isActive = prodchS.prod === p.name;
     var esc = p.name.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
-    html += '<div onclick="selectProdch(\'' + esc + '\')" style="padding:5px 8px;cursor:pointer;font-size:11px;border-radius:4px;margin-bottom:2px;'
+    html += '<div data-prod="' + esc + '" onclick="selectProdch(\'' + esc + '\')" style="padding:5px 8px;cursor:pointer;font-size:11px;border-radius:4px;margin-bottom:2px;'
       + (isActive ? 'background:#E3EEF9;color:#1B3D6F;font-weight:700;' : 'color:#4D6278;')
       + 'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="' + p.name + '">' + p.name + '</div>';
   });
@@ -2736,14 +2736,19 @@ function selectProdch(prodName) {
   var eh = document.getElementById('prodch-empty-hint');
   var dd = document.getElementById('prodch-detail');
   var loading = document.getElementById('prodch-loading');
-  var tblWrap = document.querySelector('#prodch-detail .chart-card > div[style*="overflow-x"]');
+  var tblWrap = document.getElementById('prodch-table-wrap');
   if (eh) eh.style.display = 'none';
   if (dd) dd.style.display = 'block';
-  // 로딩 표시
   if (loading) loading.style.display = 'block';
-  if (tblWrap) tblWrap.style.visibility = 'hidden';
+  if (tblWrap) tblWrap.style.display = 'none';
   _setProdchStep(0);
-  renderProdchTab();
+  // 목록 하이라이트만 갱신 (전체 재렌더 안 함)
+  document.querySelectorAll('#prodch-list div[data-prod]').forEach(function(el) {
+    var active = el.getAttribute('data-prod') === prodName;
+    el.style.background = active ? '#EBF5FF' : 'transparent';
+    el.style.color = active ? '#1B3D6F' : '#3B4A5C';
+    el.style.fontWeight = active ? '600' : 'normal';
+  });
   setTimeout(function() {
     _setProdchStep(1);
     setTimeout(function() {
@@ -2752,7 +2757,7 @@ function selectProdch(prodName) {
         _setProdchStep(3);
         _drawProdchTable();
         if (loading) loading.style.display = 'none';
-        if (tblWrap) tblWrap.style.visibility = 'visible';
+        if (tblWrap) tblWrap.style.display = 'block';
       }, 120);
     }, 120);
   }, 50);
@@ -2783,7 +2788,13 @@ function moveProdchPage(dir) {
 
 function _drawProdchTable() {
   var prodName = prodchS.prod;
-  if (!prodName || typeof PROD_CH_DATA === 'undefined' || !PROD_CH_DATA[prodName]) return;
+  if (!prodName || typeof PROD_CH_DATA === 'undefined' || !PROD_CH_DATA[prodName]) {
+    var lg = document.getElementById('prodch-loading');
+    if (lg) lg.style.display = 'none';
+    var ew = document.getElementById('prodch-table-wrap');
+    if (ew) ew.style.display = 'none';
+    return;
+  }
 
   var titleEl = document.getElementById('prodch-detail-title');
   var subEl = document.getElementById('prodch-detail-sub');
