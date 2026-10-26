@@ -2755,9 +2755,10 @@ function selectProdch(prodName) {
       _setProdchStep(2);
       setTimeout(function() {
         _setProdchStep(3);
-        _drawProdchTable();
+        try { _drawProdchTable(); } catch(e) { console.error(e); }
         if (loading) loading.style.display = 'none';
-        if (tblWrap) tblWrap.style.display = 'block';
+        var tw = document.getElementById('prodch-table-wrap');
+        if (tw) tw.style.display = 'block';
       }, 120);
     }, 120);
   }, 50);
