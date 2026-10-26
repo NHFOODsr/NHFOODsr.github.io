@@ -577,7 +577,7 @@ tfoot td { font-weight: 700; background: #F4F8FD; border-top: 1px solid var(--bo
           <div id="prodch-list" style="max-height:600px;overflow-y:auto;"></div>
         </div>
         <div style="flex:1;min-width:0;">
-          <div id="prodch-empty-hint" style="display:flex;align-items:center;justify-content:center;background:#F4F8FD;border:1px solid #DDE8F2;border-radius:8px;padding:40px 16px;color:#8A9BB0;font-size:13px;text-align:center;">품목을 클릭하면 채널별 손익분析표가 표시됩니다</div>
+          <div id="prodch-empty-hint" style="display:flex;align-items:center;justify-content:center;background:#F4F8FD;border:1px solid #DDE8F2;border-radius:8px;padding:40px 16px;color:#8A9BB0;font-size:13px;text-align:center;">품목을 클릭하면 채널별 손익분석표가 표시됩니다</div>
           <div id="prodch-detail" style="display:none;">
             <div class="chart-card" style="padding:10px 12px;">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;gap:8px;flex-wrap:wrap;">
@@ -2778,23 +2778,31 @@ function _drawProdchTable() {
   if (pgPrev) pgPrev.disabled = prodchS.page <= 0;
   if (pgNext) pgNext.disabled = prodchS.page >= extraPages-1;
 
-  function getAcct(acctKey, yr2, ch) {
+  // 계정 데이터 캐시 (품목 선택 시 1회 집계)
+  var _acctCache = {};
+  (function() {
     var d1v = (typeof prodchS !== 'undefined' && prodchS.d1) ? prodchS.d1 : '판매사업';
-    var acctRoot = typeof PROD_CH_ACCT_DATA !== 'undefined'
-      && PROD_CH_ACCT_DATA[prodName]
-      && PROD_CH_ACCT_DATA[prodName][d1v];
-    if (!acctRoot) return 0;
-    if (ch === '__total__') {
-      return Object.keys(acctRoot).reduce(function(t, cc) {
-        var d = acctRoot[cc] && acctRoot[cc][yr2] && acctRoot[cc][yr2][acctKey];
-        if (!d) return t;
-        return t + ms.reduce(function(t2, m) { return t2 + (d[String(m)] || 0); }, 0);
-      }, 0);
-    } else {
-      var d = acctRoot[ch] && acctRoot[ch][yr2] && acctRoot[ch][yr2][acctKey];
-      if (!d) return 0;
-      return ms.reduce(function(t, m) { return t + (d[String(m)] || 0); }, 0);
-    }
+    if (typeof PROD_CH_ACCT_DATA === 'undefined') return;
+    var acctRoot = PROD_CH_ACCT_DATA[prodName] && PROD_CH_ACCT_DATA[prodName][d1v];
+    if (!acctRoot) return;
+    ['25','26'].forEach(function(yr2) {
+      _acctCache[yr2] = {};
+      Object.keys(acctRoot).forEach(function(ch) {
+        var chD = acctRoot[ch] && acctRoot[ch][yr2];
+        if (!chD) return;
+        Object.keys(chD).forEach(function(acctKey) {
+          if (!_acctCache[yr2][acctKey]) _acctCache[yr2][acctKey] = {__total__: 0};
+          var monthD = chD[acctKey];
+          var sum = ms.reduce(function(t,m) { return t + (monthD[String(m)] || 0); }, 0);
+          _acctCache[yr2][acctKey][ch] = sum;
+          _acctCache[yr2][acctKey]['__total__'] += sum;
+        });
+      });
+    });
+  })();
+  function getAcct(acctKey, yr2, ch) {
+    var row = _acctCache[yr2] && _acctCache[yr2][acctKey];
+    return row ? (row[ch] || 0) : 0;
   }
 
   // PROD_CH_ACCT_DATA 직접 사용으로 안분 불필요
