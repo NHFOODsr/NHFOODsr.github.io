@@ -226,7 +226,7 @@ main { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
 .table-scroll { overflow-x: auto; }
 table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: 11px; }
 thead tr { background: #F4F8FD; }
-th { padding: 5px 10px; text-align: right; font-size: 13px; font-weight: 700; color: var(--text-mid); letter-spacing: 0.2px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+th { padding: 5px 10px; text-align: right; font-size: 12px; font-weight: 700; color: var(--text-mid); letter-spacing: 0.2px; border-bottom: 1px solid var(--border); white-space: nowrap; }
 th:first-child { text-align: left; }
 td { padding: 4px 10px; text-align: right; border-bottom: 1px solid var(--border-light); color: var(--text); }
 td:first-child { text-align: left; font-weight: 600; }
@@ -247,7 +247,7 @@ tfoot td { font-weight: 700; background: #F4F8FD; border-top: 1px solid var(--bo
 
 /* 원가구조 테이블 */
 .cost-table { width: 100%; border-collapse: collapse; font-size: 11px; font-variant-numeric: tabular-nums; }
-.cost-table th { padding: 5px 10px; background: #F4F8FD; border-bottom: 1px solid var(--border); font-size: 13px; font-weight: 700; color: var(--text-mid); text-align: right; white-space: nowrap; }
+.cost-table th { padding: 5px 10px; background: #F4F8FD; border-bottom: 1px solid var(--border); font-size: 12px; font-weight: 700; color: var(--text-mid); text-align: right; white-space: nowrap; }
 .cost-table th:first-child { text-align: left; }
 .cost-table td { padding: 4px 10px; border-bottom: 1px solid var(--border-light); text-align: right; }
 .cost-table td:first-child { text-align: left; color: var(--text-mid); font-size: 10px; padding-left: 14px; }
@@ -2150,13 +2150,13 @@ function renderDashboardTable() {
     {key:'08. 용역비',             label:'용역비',             indent:2},
     {key:'09. 전자상거래지급수수료', label:'전자상거래지급수수료', indent:2},
     {key:'contrib',      label:'공헌이익',                indent:0, bold:true, isAmtDiff:true},
-    {key:'rate_contrib', label:'공헌이익율',               indent:1, isPct:true, bold:true},
+    {key:'rate_contrib', label:'공헌이익율',               indent:0, isPct:true, bold:true},
     {key:'mk',           label:'마케팅부 판관비',           indent:1},
     {key:'mg',           label:'경영지원부 판관비',         indent:1},
     {key:'oi',           label:'영업외수익',                indent:1},
     {key:'oe',           label:'영업외비용',                indent:1},
     {key:'net',          label:'당기순이익',                indent:0, bold:true, isAmtDiff:true},
-    {key:'rate_net',     label:'당기순이익율',              indent:1, isPct:true, bold:true},
+    {key:'rate_net',     label:'당기순이익율',              indent:0, isPct:true, bold:true},
   ];
 
   function getVal(cd, key, isYr26) {
@@ -2928,13 +2928,13 @@ function _drawProdchTable() {
     {key:'08. 용역비',              label:'용역비',             indent:2},
     {key:'09. 전자상거래지급수수료', label:'전자상거래지급수수료', indent:2},
     {key:'contrib',      label:'공헌이익', indent:0, bold:true, isAmtDiff:true},
-    {key:'rate_contrib', label:'공헌이익율', indent:1, isPct:true, bold:true},
+    {key:'rate_contrib', label:'공헌이익율', indent:0, isPct:true, bold:true},
     {key:'mk',    label:'마케팅부 판관비',   indent:1},
     {key:'mg',    label:'경영지원부 판관비', indent:1},
     {key:'oi',    label:'영업외수익', indent:1},
     {key:'oe',    label:'영업외비용', indent:1},
     {key:'net',   label:'당기순이익', indent:0, bold:true, isAmtDiff:true},
-    {key:'rate_net', label:'당기순이익율', indent:1, isPct:true, bold:true}
+    {key:'rate_net', label:'당기순이익율', indent:0, isPct:true, bold:true}
   ];
 
   rows.forEach(function(row) {
