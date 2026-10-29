@@ -366,8 +366,8 @@ tfoot td { font-weight: 700; background: #F4F8FD; border-top: 1px solid var(--bo
                 <option value="1">1월</option><option value="2">2월</option>
                 <option value="3">3월</option><option value="4">4월</option>
                 <option value="5">5월</option><option value="6">6월</option>
-                <option value="7">7월</option><option value="8" selected>8월</option>
-                <option value="9">9월</option><option value="10">10월</option>
+                <option value="7">7월</option><option value="8">8월</option>
+                <option value="9" selected>9월</option><option value="10">10월</option>
                 <option value="11">11월</option><option value="12">12월</option>
               </select>
             </div>
@@ -1624,7 +1624,7 @@ function _sumCHNet(ch, d1filter, yr2, ms) {
 }
 function _sumCH(ch, d1filter, yr2, ms) {
   const chData = CH_DATA[ch] || {};
-  const d1keys = d1filter==='전체' ? Object.keys(chData) : [d1filter];
+  const d1keys = [d1filter];
   let s=0,c=0;
   for(const d1 of d1keys){
     const yrmap=(chData[d1]||{})[yr2]||{};
@@ -1819,7 +1819,7 @@ function _col(v) { return v==null||!isFinite(v) ? '' : (v>=0?'color:#1EB86F':'co
 function _sumSC(yr, ms, prod, d1filter) {
   const d1map = (MDATA[prod] || {});
   let s=0, c=0;
-  const d1keys = d1filter==='전체' ? Object.keys(d1map) : [d1filter];
+  const d1keys = [d1filter];
   for (const d1 of d1keys) {
     const yrmap = (d1map[d1] || {})[yr] || {};
     for (const m of ms) {
@@ -1832,7 +1832,7 @@ function _sumSC(yr, ms, prod, d1filter) {
 
 function _getFromTo() {
   const fm = parseInt(document.getElementById('from-month')?.value || '1');
-  const tm = parseInt(document.getElementById('to-month')?.value || '8');
+  const tm = parseInt(document.getElementById('to-month')?.value || '9');
   return { fm, tm };
 }
 
