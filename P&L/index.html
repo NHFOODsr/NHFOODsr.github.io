@@ -1668,15 +1668,25 @@ function renderChannelTable() {
   const slice = allRows;
 
   const allCH = Object.keys(CH_DATA);
-  let ts26=0,tc26=0,ts25=0,tc25=0,tn26=0,tn25=0;
+  let ts26=0,tc26=0,ts25=0,tc25=0;
   for(const ch of allCH){
     const [s,c]=_sumCH(ch,chS.d1,'26',ms); ts26+=s;tc26+=c;
-    const net26=_sumCHNet(ch,chS.d1,'26',ms); tn26+=c+net26;
   }
   for(const ch of allCH){
     const [s,c]=_sumCH(ch,chS.d1,'25',ms); ts25+=s;tc25+=c;
-    const net25=_sumCHNet(ch,chS.d1,'25',ms); tn25+=c+net25;
   }
+  // 당기순이익 조정값: 대시보드와 동일하게 ACCT_DATA 기준 (mk+mg-oi+oe)
+  const _akd1 = chS.d1;
+  const netAdj26 = -_sumAD(_akd1,'26','10. 마케팅부 판관비',ms)
+                  - _sumAD(_akd1,'26','11. 경영지원부 판관비',ms)
+                  + _sumAD(_akd1,'26','12. 영업외수익',ms)
+                  - _sumAD(_akd1,'26','13. 영업외비용',ms);
+  const netAdj25 = -_sumAD(_akd1,'25','10. 마케팅부 판관비',ms)
+                  - _sumAD(_akd1,'25','11. 경영지원부 판관비',ms)
+                  + _sumAD(_akd1,'25','12. 영업외수익',ms)
+                  - _sumAD(_akd1,'25','13. 영업외비용',ms);
+  const tn26 = tc26 + netAdj26;
+  const tn25 = tc25 + netAdj25;
   const t_row = {ch:'전체합계',s26:ts26,c26:tc26,s25:ts25,c25:tc25,
     cr26:ts26?tc26/ts26:null,cr25:ts25?tc25/ts25:null,
     n26:tn26,n25:tn25,nr26:ts26?tn26/ts26:null,nr25:ts25?tn25/ts25:null};
@@ -1717,8 +1727,9 @@ function renderChannelTable() {
 
   function rowHtml(p, isTotal) {
     const bgStyle = isTotal ? 'background:#EEF5FF;font-weight:700;' : '';
-    const net26=p.n26!=null?p.n26:p.c26+_sumCHNet(p.ch,chS.d1,'26',ms);
-    const net25=p.n25!=null?p.n25:p.c25+_sumCHNet(p.ch,chS.d1,'25',ms);
+    // 당기순이익: 전체합계는 pre-computed, 개별채널은 매출액 비중으로 조정값 배분
+    const net26=p.n26!=null?p.n26:p.c26+(ts26>0?netAdj26*p.s26/ts26:0);
+    const net25=p.n25!=null?p.n25:p.c25+(ts25>0?netAdj25*p.s25/ts25:0);
     const nr26=p.s26?net26/p.s26:null, nr25=p.s25?net25/p.s25:null;
     const nDiff=nr26!=null&&nr25!=null?nr26-nr25:null;
     const netG=net25&&net25!==0?(net26-net25)/Math.abs(net25):null;
