@@ -483,7 +483,11 @@ tfoot td { font-weight: 700; background: #F4F8FD; border-top: 1px solid var(--bo
         <div class="empty-text">분석을 실행하면 표시됩니다</div>
       </div>
       <div id="monthly-content" style="display:none;flex-direction:column;gap:10px;">
-        <div style="display:flex;justify-content:flex-end;margin-bottom:2px;">
+        <div style="display:flex;justify-content:flex-end;align-items:center;gap:8px;margin-bottom:2px;">
+          <div style="border:1px solid var(--border);border-radius:5px;overflow:hidden;display:flex;">
+            <button class="tgl-btn active" id="monthly-tgl-monthly" onclick="setMonthlyPeriod('당월')">당월</button>
+            <button class="tgl-btn" id="monthly-tgl-cumul" onclick="setMonthlyPeriod('누계')">누계</button>
+          </div>
           <div style="border:1px solid var(--border);border-radius:5px;overflow:hidden;display:flex;">
             <button class="tgl-btn active" id="monthly-tgl-contrib" onclick="setMonthlyMetric('공헌이익')">공헌이익</button>
             <button class="tgl-btn" id="monthly-tgl-net" onclick="setMonthlyMetric('당기순이익')">당기순이익</button>
@@ -1427,68 +1431,136 @@ function renderMonthlyTable(data, currYr, prevYr, fromM, toM, selChs) {
   const pLabel = getProfitLabel();
   const rLabel = getProfitRateLabel();
   const isNet = state.analysisMode === 'net';
-  function _mthProfit(accts, yr2, m) {
+  const isCumul = monthlyS.period === '누계';
+
+  function _acctSum(yr, m1, m2) {
+    // sum accounts from month m1 to m2
+    const result = {};
+    for (let mm = m1; mm <= m2; mm++) {
+      const a = sumAcctByMonth(data, yr, mm, selChs);
+      for (const k in a) result[k] = (result[k]||0) + a[k];
+    }
+    return result;
+  }
+  function _mthProfit(accts, yr2, ms) {
     const base = calcContrib(accts);
     if (!isNet) return base;
-    return base - _sumAD('전체',yr2,'10. 마케팅부 판관비',[m]) - _sumAD('전체',yr2,'11. 경영지원부 판관비',[m]) + _sumAD('전체',yr2,'12. 영업외수익',[m]) - _sumAD('전체',yr2,'13. 영업외비용',[m]);
+    const msArr = Array.isArray(ms) ? ms : [ms];
+    return base - _sumAD('전체',yr2,'10. 마케팅부 판관비',msArr) - _sumAD('전체',yr2,'11. 경영지원부 판관비',msArr) + _sumAD('전체',yr2,'12. 영업외수익',msArr) - _sumAD('전체',yr2,'13. 영업외비용',msArr);
   }
+
+  const periodTitle = isCumul ? '누계' : '당월';
+  const tdP = 'padding:4px 7px;'; // 누계 모드 시 여백 축소
+
+  var colsExtra='';
+  if (isCumul) {
+    colsExtra = `<th style="${tdP}">전월 ${pLabel}</th><th style="${tdP}">전월 ${rLabel}</th><th style="${tdP}">증감액</th><th style="${tdP}">증감률</th>`;
+  }
+  var html_thead = `<thead><tr>
+    <th style="${tdP}">월</th>
+    <th style="${tdP}">금년 매출액</th>
+    <th style="${tdP}">금년 ${pLabel}</th>
+    <th style="${tdP}">${rLabel}</th>
+    <th style="${tdP}">전년 ${pLabel}</th>
+    <th style="${tdP}">전년 ${rLabel}</th>
+    <th style="${tdP}">증감액</th>
+    <th style="${tdP}">증감률</th>
+    ${colsExtra}
+  </tr></thead>`;
+
   let html = `<div class="table-card">
     <div class="table-card-header">
-      <h3>📅 월별 손익 상세 (${currYr} vs ${prevYr})</h3>
+      <h3>📅 월별 손익 상세 (${currYr} vs ${prevYr}) · ${periodTitle}</h3>
     </div>
     <div class="table-scroll">
-    <table>
-      <thead><tr>
-        <th>월</th>
-        <th>금년 매출액</th>
-        <th>금년 ${pLabel}</th>
-        <th>${rLabel}</th>
-        <th>전년 ${pLabel}</th>
-        <th>전년 ${rLabel}</th>
-        <th>증감액</th>
-        <th>증감률</th>
-      </tr></thead>
+    <table style="font-size:${isCumul?'11px':'12px'}">
+      ${html_thead}
       <tbody>`;
 
-  let totC=0, totCS=0, totCP=0, totPP=0;
+  let totC=0, totCP=0, totPP=0;
   for (let m = fromM; m <= toM; m++) {
-    const cA = sumAcctByMonth(data, currYr, m, selChs);
-    const pA = sumAcctByMonth(data, prevYr, m, selChs);
+    let cA, pA, msArr;
+    if (isCumul) {
+      cA = _acctSum(currYr, fromM, m);
+      pA = _acctSum(prevYr, fromM, m);
+      msArr = Array.from({length:m-fromM+1},function(_,i){return fromM+i;});
+    } else {
+      cA = sumAcctByMonth(data, currYr, m, selChs);
+      pA = sumAcctByMonth(data, prevYr, m, selChs);
+      msArr = [m];
+    }
     const cS = cA['01. 매출액'] || 0;
     const pS = pA['01. 매출액'] || 0;
-    const cp = _mthProfit(cA, currYr, m);
-    const pp = _mthProfit(pA, prevYr, m);
+    const cp = _mthProfit(cA, currYr, msArr);
+    const pp = _mthProfit(pA, prevYr, msArr);
     const diff = cp - pp;
     const diffR = pp ? diff / Math.abs(pp) * 100 : null;
     const cRate = cS ? cp / cS * 100 : 0;
     const pRate = pS ? pp / pS * 100 : 0;
-    totC += cS; totCP += cp; totPP += pp;
+
+    let extraCols = '';
+    if (isCumul) {
+      // 전월 누계 (fromM to m-1)
+      if (m > fromM) {
+        const prevMsArr = Array.from({length:m-fromM},function(_,i){return fromM+i;});
+        const prevCA = _acctSum(currYr, fromM, m-1);
+        const prevS = prevCA['01. 매출액'] || 0;
+        const prevCP = _mthProfit(prevCA, currYr, prevMsArr);
+        const prevRate = prevS ? prevCP / prevS * 100 : 0;
+        const incAmt = cp - prevCP;
+        const incR = prevCP ? incAmt / Math.abs(prevCP) * 100 : null;
+        extraCols = `<td style="${tdP}">${fmtM(prevCP)}</td>
+          <td style="${tdP}" class="${clsSign(prevRate)}">${fmtRate(prevRate)}</td>
+          <td style="${tdP}" class="${clsSign(incAmt)}">${fmtM(incAmt)}</td>
+          <td style="${tdP}" class="${clsSign(incAmt)}">${incR!==null?fmtPct(incR):'-'}</td>`;
+      } else {
+        extraCols = `<td style="${tdP}">-</td><td style="${tdP}">-</td><td style="${tdP}">-</td><td style="${tdP}">-</td>`;
+      }
+    }
+
+    totC = cS; totCP = cp; totPP = pp; // 누계 모드에선 마지막 월 값이 누계합
+    if (!isCumul) { totC += 0; } // 당월 모드에서는 별도 집계
     html += `<tr>
-      <td>${m}월</td>
-      <td>${fmtM(cS)}</td>
-      <td>${fmtM(cp)}</td>
-      <td class="${clsSign(cRate)}">${fmtRate(cRate)}</td>
-      <td>${fmtM(pp)}</td>
-      <td>${fmtRate(pRate)}</td>
-      <td class="${clsSign(diff)}">${fmtM(diff)}</td>
-      <td class="${clsSign(diff)}">${diffR !== null ? fmtPct(diffR) : '-'}</td>
+      <td style="${tdP}">${m}월</td>
+      <td style="${tdP}">${fmtM(cS)}</td>
+      <td style="${tdP}">${fmtM(cp)}</td>
+      <td style="${tdP}" class="${clsSign(cRate)}">${fmtRate(cRate)}</td>
+      <td style="${tdP}">${fmtM(pp)}</td>
+      <td style="${tdP}" class="${clsSign(pRate)}">${fmtRate(pRate)}</td>
+      <td style="${tdP}" class="${clsSign(diff)}">${fmtM(diff)}</td>
+      <td style="${tdP}" class="${clsSign(diff)}">${diffR !== null ? fmtPct(diffR) : '-'}</td>
+      ${extraCols}
     </tr>`;
   }
 
-  const tDiff = totCP - totPP;
-  const tDiffR = totPP ? tDiff / Math.abs(totPP) * 100 : null;
-  const tCRate = totC ? totCP / totC * 100 : 0;
-  html += `</tbody><tfoot><tr>
-    <td>누계</td>
-    <td>${fmtM(totC)}</td>
-    <td>${fmtM(totCP)}</td>
-    <td class="${clsSign(tCRate)}">${fmtRate(tCRate)}</td>
-    <td>${fmtM(totPP)}</td>
-    <td>-</td>
-    <td class="${clsSign(tDiff)}">${fmtM(tDiff)}</td>
-    <td class="${clsSign(tDiff)}">${tDiffR !== null ? fmtPct(tDiffR) : '-'}</td>
-  </tr></tfoot>
-    </table></div></div>`;
+  // 합계/누계 행 (당월 모드만)
+  if (!isCumul) {
+    let sumC=0, sumCP=0, sumPP=0;
+    for (let m = fromM; m <= toM; m++) {
+      const cA = sumAcctByMonth(data, currYr, m, selChs);
+      const pA = sumAcctByMonth(data, prevYr, m, selChs);
+      sumC += cA['01. 매출액']||0;
+      sumCP += _mthProfit(cA, currYr, [m]);
+      sumPP += _mthProfit(pA, prevYr, [m]);
+    }
+    const tDiff = sumCP - sumPP;
+    const tDiffR = sumPP ? tDiff / Math.abs(sumPP) * 100 : null;
+    const tCRate = sumC ? sumCP / sumC * 100 : 0;
+    html += `</tbody><tfoot><tr>
+      <td style="${tdP}">누계</td>
+      <td style="${tdP}">${fmtM(sumC)}</td>
+      <td style="${tdP}">${fmtM(sumCP)}</td>
+      <td style="${tdP}" class="${clsSign(tCRate)}">${fmtRate(tCRate)}</td>
+      <td style="${tdP}">${fmtM(sumPP)}</td>
+      <td style="${tdP}">-</td>
+      <td style="${tdP}" class="${clsSign(tDiff)}">${fmtM(tDiff)}</td>
+      <td style="${tdP}" class="${clsSign(tDiff)}">${tDiffR !== null ? fmtPct(tDiffR) : '-'}</td>
+    </tr></tfoot>`;
+  } else {
+    html += '</tbody>';
+  }
+
+  html += `</table></div></div>`;
 
   const mtc = document.getElementById('monthly-table-content');
   if (mtc) mtc.innerHTML = html;
@@ -1615,7 +1687,7 @@ const CH_DATA = {"수탁": {"수탁사업": {"25": {"1": [3486639, 3483318], "2"
 
 // ── 채널별 표 상태 ──
 const dashS = { period: '누계' };
-const monthlyS = { metric: '공헌이익' };
+const monthlyS = { metric: '공헌이익', period: '당월' };
 const chS = { period: '누계', d1: '전체', page: 0, perPage: 3 };
 
 function _sumCHNet(ch, d1filter, yr2, ms) {
@@ -1766,7 +1838,16 @@ function setMonthlyMetric(m){
     if(el) el.classList.toggle('active',id==='monthly-tgl-contrib'?m==='공헌이익':m==='당기순이익');
   });
   renderMonthlyCharts();
-  renderMonthlyTable(state.data,state.currYr||'26',state.prevYr||'25',state.fromM||1,state.toM||8,state.selChs||[]);
+  renderMonthlyTable(state.data,state.currYr||'26',state.prevYr||'25',state.fromM||1,state.toM||9,state.selChs||[]);
+}
+function setMonthlyPeriod(p){
+  monthlyS.period=p;
+  ['monthly-tgl-monthly','monthly-tgl-cumul'].forEach(function(id){
+    const el=document.getElementById(id);
+    if(el) el.classList.toggle('active',id==='monthly-tgl-monthly'?p==='당월':p==='누계');
+  });
+  renderMonthlyCharts();
+  renderMonthlyTable(state.data,state.currYr||'26',state.prevYr||'25',state.fromM||1,state.toM||9,state.selChs||[]);
 }
 function setChPeriod(p){chS.period=p;chS.page=0;renderChannelTable();}
 function setChD1(d){chS.d1=d;chS.page=0;renderChannelTable();}
@@ -2244,27 +2325,26 @@ function renderMonthlyCharts() {
   if (typeof MDATA === 'undefined' && typeof ACCT_DATA === 'undefined') return;
   const {fm, tm} = _getFromTo();
   const isNet = monthlyS.metric === '당기순이익';
+  const isCumul = monthlyS.period === '누계';
+  const SACCTS=['03. 지급수수료','04. 시장개척비','05. 시험개발비','06. 운반비','07. 선전광고료','08. 용역비','09. 전자상거래지급수수료'];
   const labels=[], rate26=[], rate25=[], rateDiff=[], amt26=[], amt25=[], amtDiff=[];
+  // 누계용 누적합
+  let cumA26=0,cumA25=0,cumS26=0,cumS25=0;
 
   for (let m=fm; m<=tm; m++) {
-    labels.push(m+'월');
-    const ms=[m];
+    labels.push(isCumul ? fm+'~'+m+'월' : m+'월');
+    const ms = isCumul ? Array.from({length:m-fm+1},function(_,i){return fm+i;}) : [m];
     let r26val=0, r25val=0, a26val=0, a25val=0;
 
     if (isNet && typeof ACCT_DATA !== 'undefined') {
       // 당기순이익: ACCT_DATA 기반
-      function gA(yr2, acct) { return _sumAD('전체', yr2, acct, ms); }
-      const SACCTS=['03. 지급수수료','04. 시장개척비','05. 시험개발비','06. 운반비','07. 선전광고료','08. 용역비','09. 전자상거래지급수수료'];
       ['26','25'].forEach(function(yr2){
-        const s=gA(yr2,'01. 매출액');
-        const cogs=gA(yr2,'02. 매출원가');
-        let sf=0; SACCTS.forEach(function(a){sf+=gA(yr2,a);});
+        var gA=function(acct){return _sumAD('전체',yr2,acct,ms);};
+        const s=gA('01. 매출액');
+        const cogs=gA('02. 매출원가');
+        let sf=0; SACCTS.forEach(function(a){sf+=gA(a);});
         const c=s-cogs-sf;
-        const mk=gA(yr2,'10. 마케팅부 판관비');
-        const mg=gA(yr2,'11. 경영지원부 판관비');
-        const oi=gA(yr2,'12. 영업외수익');
-        const oe=gA(yr2,'13. 영업외비용');
-        const n=c-mk-mg+oi-oe;
+        const n=c-gA('10. 마케팅부 판관비')-gA('11. 경영지원부 판관비')+gA('12. 영업외수익')-gA('13. 영업외비용');
         const nr=s?n/s*100:0;
         if(yr2==='26'){a26val=n/1e6;r26val=nr;}
         else{a25val=n/1e6;r25val=nr;}
@@ -2292,10 +2372,11 @@ function renderMonthlyCharts() {
   }
 
   const metricLabel = isNet ? '당기순이익' : '공헌이익';
+  const periodLabel = isCumul ? '누계' : '당월';
   const rTitle = document.getElementById('monthly-rate-title');
   const aTitle = document.getElementById('monthly-amt-title');
-  if (rTitle) rTitle.textContent = '월별 손익 추이';
-  if (aTitle) aTitle.textContent = '월별 손익액 추이';
+  if (rTitle) rTitle.textContent = '월별 손익 추이 ('+periodLabel+')';
+  if (aTitle) aTitle.textContent = '월별 손익액 추이 ('+periodLabel+')';
   const rateSub = document.getElementById('monthly-rate-sub');
   const amtSub = document.getElementById('monthly-contrib-sub');
   if (rateSub) rateSub.textContent = '2026 vs 2025 | '+metricLabel+'율(%)';
