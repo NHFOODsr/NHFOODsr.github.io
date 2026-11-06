@@ -1322,10 +1322,13 @@ function setMode(mode) {
   const fromEl = document.getElementById('from-month');
   const toEl = document.getElementById('to-month');
   const isRealtime = mode === 'realtime';
-  fromEl.disabled = isRealtime;
-  toEl.disabled = isRealtime;
-  fromEl.value = '1';
-  toEl.value = isRealtime ? String(currentMonth()) : '12';
+  fromEl.disabled = false;
+  toEl.disabled = false;
+  if (isRealtime) {
+    // 실시간 분析 전환 시 종료월을 현재 월로 초기화 후 자유 변경 허용
+    fromEl.value = '1';
+    toEl.value = String(currentMonth());
+  }
 
   if (state.prevRows && state.currRows) runAnalysis();
 }
@@ -1945,8 +1948,8 @@ function runAnalysis() {
   // 금년도는 마감되지 않은 월의 매출을 절대 포함하지 않는다. 다만 전년도(2025)는 12개월 모두
   // 마감된 데이터이므로, 그래프/표에서는 선택한 월까지(최대 12월) 그대로 보여준다 — "동월대비" 비교
   // 수치(KPI, 채널·품목 비교)만 금년도 마감월(cmpToM)에 맞춰 공정하게 계산한다.
-  const fromM = isRealtime ? 1 : parseInt(document.getElementById('from-month').value);
-  const toM = isRealtime ? currentMonth() : parseInt(document.getElementById('to-month').value);
+  const fromM = parseInt(document.getElementById('from-month').value);
+  const toM = parseInt(document.getElementById('to-month').value);
   const metric = document.getElementById('metric-type').value;
 
   if (fromM > toM) { alert('시작월이 종료월보다 늦을 수 없습니다.'); return; }
@@ -3141,6 +3144,8 @@ function resetAll() {
   });
   document.getElementById('from-month').value = '1';
   document.getElementById('to-month').value = state.mode === 'realtime' ? String(currentMonth()) : '12';
+  document.getElementById('from-month').disabled = false;
+  document.getElementById('to-month').disabled = false;
   MS_KEYS.forEach(function(k){ filterState[k]=new Set(); updateMsTrigger(k); document.querySelectorAll('#ms-'+k+'-opts input').forEach(function(cb){cb.checked=false;}); });
   document.getElementById('result-area').classList.add('hidden');
   document.getElementById('empty-state').classList.remove('hidden');
