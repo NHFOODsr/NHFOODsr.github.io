@@ -566,6 +566,7 @@ tfoot td { font-weight: 700; background: #F4F8FD; border-top: 1px solid var(--bo
               <div style="display:flex;gap:4px;flex-shrink:0;">
                 <button id="pch-tgl-rate" onclick="setPchMode('rate')" style="padding:2px 8px;font-size:11px;border:1px solid var(--border);border-radius:4px;cursor:pointer;background:#1B6CA8;color:#fff;">율</button>
                 <button id="pch-tgl-amt" onclick="setPchMode('amt')" style="padding:2px 8px;font-size:11px;border:1px solid var(--border);border-radius:4px;cursor:pointer;background:#fff;color:#4D6278;">액</button>
+                <button onclick="switchTab('prodch');selectProdch(prodChS.prod);" style="padding:2px 8px;font-size:11px;border:1px solid #1B6CA8;border-radius:4px;cursor:pointer;background:#E3EEF9;color:#1B3D6F;font-weight:600;">상세보기</button>
                 <button onclick="document.getElementById('prod-ch-panel').style.display='none';document.getElementById('prod-ch-empty').style.display='flex'" style="background:none;border:1px solid var(--border);border-radius:4px;padding:2px 7px;cursor:pointer;font-size:13px;color:#6B7A8D;">&#10005;</button>
               </div>
             </div>
@@ -581,7 +582,13 @@ tfoot td { font-weight: 700; background: #F4F8FD; border-top: 1px solid var(--bo
     <div class="tab-panel" id="tab-prodch">
       <div id="prodch-content" style="display:flex;gap:10px;align-items:flex-start;">
         <div class="chart-card" style="min-width:160px;max-width:200px;flex-shrink:0;padding:10px 8px;">
-          <div style="font-size:12px;font-weight:700;color:#1B3D6F;margin-bottom:6px;padding:0 4px;">품목 목록 <span style="font-size:10px;color:#8A9BB0;">(26년 매출 순)</span></div>
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;padding:0 4px;">
+            <span style="font-size:12px;font-weight:700;color:#1B3D6F;">품목 목록 <span style="font-size:10px;color:#8A9BB0;">(26년 순)</span></span>
+            <div style="display:flex;border:1px solid var(--border);border-radius:4px;overflow:hidden;">
+              <button id="prodch-tgl-cumul" onclick="setProdchPeriod('누계')" style="padding:1px 7px;font-size:10px;cursor:pointer;border:none;font-family:inherit;background:#1B3D6F;color:#fff;font-weight:600;">누계</button>
+              <button id="prodch-tgl-monthly" onclick="setProdchPeriod('당월')" style="padding:1px 7px;font-size:10px;cursor:pointer;border:none;font-family:inherit;background:#fff;color:#6B7A8D;">당월</button>
+            </div>
+          </div>
           <div id="prodch-list" style="max-height:600px;overflow-y:auto;"></div>
         </div>
         <div style="flex:1;min-width:0;">
@@ -2506,7 +2513,7 @@ function _drawProdChPanel() {
   if (titleEl) titleEl.textContent = prodName;
 
   const {fm, tm} = _getFromTo();
-  const isCumul = (typeof top10S !== 'undefined' && top10S.period) ? (top10S.period === 'cumul' || top10S.period === '누계') : true;
+  const isCumul = prodchS.period === '누계';
   const ms = isCumul ? Array.from({length:tm-fm+1},(_,i)=>fm+i) : [tm];
   const allMs = Array.from({length:12},(_,i)=>i+1);
   if (subEl) subEl.textContent = isCumul ? fm+'~'+tm+'월 누계' : tm+'월 당월';
@@ -2750,6 +2757,14 @@ function renderTop10Table() {
 
 function setTop10View(v){top10S.view=v;top10S.page=0;renderTop10Table();}
 function setTop10Period(p){top10S.period=p;top10S.page=0;renderTop10Table();}
+function setProdchPeriod(p){
+  prodchS.period=p;
+  var cumBtn=document.getElementById('prodch-tgl-cumul');
+  var monBtn=document.getElementById('prodch-tgl-monthly');
+  if(cumBtn){cumBtn.style.background=p==='누계'?'#1B3D6F':'#fff';cumBtn.style.color=p==='누계'?'#fff':'#6B7A8D';cumBtn.style.fontWeight=p==='누계'?'600':'400';}
+  if(monBtn){monBtn.style.background=p==='당월'?'#1B3D6F':'#fff';monBtn.style.color=p==='당월'?'#fff':'#6B7A8D';monBtn.style.fontWeight=p==='당월'?'600':'400';}
+  renderProdchTab();
+}
 function changeTop10Page(d){top10S.page+=d;renderTop10Table();}
 function setTop10D1(d1){top10S.d1=d1;top10S.page=0;renderTop10Table();}
 
@@ -2769,11 +2784,11 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 // ────────────────────────────────────────────────────
 // 품목별 채널별 탭
-const prodchS = { prod: null, page: 0, d1: '판매사업' };
+const prodchS = { prod: null, page: 0, d1: '판매사업', period: '누계' };
 
 function renderProdchTab() {
   if (typeof MDATA === 'undefined') return;
-  const isCumul = (typeof top10S !== 'undefined') ? (top10S.period === '누계') : true;
+  const isCumul = prodchS.period === '누계';
   const {fm, tm} = _getFromTo();
   const ms = isCumul ? Array.from({length:tm-fm+1},(_,i)=>fm+i) : [tm];
 
@@ -2901,7 +2916,7 @@ function _drawProdchTable() {
   if (titleEl) titleEl.textContent = prodName;
 
   var {fm, tm} = _getFromTo();
-  var isCumul = (typeof top10S !== 'undefined') ? (top10S.period === '누계') : true;
+  var isCumul = prodchS.period === '누계';
   var ms = isCumul ? Array.from({length:tm-fm+1},function(_,i){return fm+i;}) : [tm];
   if (subEl) subEl.textContent = (isCumul ? fm+'~'+tm+'월 누계' : tm+'월 당월') + ' | 단위: 백만원 / %';
 
