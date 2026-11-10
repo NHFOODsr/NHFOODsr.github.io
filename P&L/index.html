@@ -432,10 +432,10 @@ tfoot td { font-weight: 700; background: #F4F8FD; border-top: 1px solid var(--bo
     <div class="tab-bar">
       <button class="tab-btn active" onclick="switchTab('dashboard')">📊 대시보드</button>
       <button class="tab-btn" onclick="switchTab('monthly')">📅 월별 상세분석</button>
-      <button class="tab-btn" ononclick="switchTab('channel')">🏪 채널별 상세분析</button>
+      <button class="tab-btn" onclick="switchTab('channel')">🏪 채널별 상세분석</button>
       <button class="tab-btn" onclick="switchTab('chacct')">📋 채널별 상세(계정)</button>
       <button class="tab-btn" onclick="switchTab('chprod')">🔀 채널별 품목별</button>
-      <button class="tab-btn" onclick="switchTab('item')">📊 품목별 상세분析</button>
+      <button class="tab-btn" onclick="switchTab('item')">📊 품목별 상세분석</button>
       <button class="tab-btn" onclick="switchTab('prodch')">📦 품목별 채널별</button>
     </div>
 
@@ -601,6 +601,10 @@ tfoot td { font-weight: 700; background: #F4F8FD; border-top: 1px solid var(--bo
                 </div>
                 <div style="display:flex;gap:6px;align-items:center;">
                   <div style="display:flex;border:1px solid var(--border);border-radius:5px;overflow:hidden;">
+                    <button id="prodch-rate-amt" onclick="setProdchRate('액')" style="padding:3px 10px;font-size:12px;cursor:pointer;border:none;font-family:inherit;background:#fff;color:#6B7A8D;">액</button>
+                    <button id="prodch-rate-pct" onclick="setProdchRate('율')" style="padding:3px 10px;font-size:12px;cursor:pointer;border:none;font-family:inherit;background:#1B3D6F;color:#fff;font-weight:600;">율</button>
+                  </div>
+                  <div style="display:flex;border:1px solid var(--border);border-radius:5px;overflow:hidden;">
                     <button id="prodch-tgl-cumul" onclick="setProdchPeriod('누계')" style="padding:3px 12px;font-size:12px;cursor:pointer;border:none;font-family:inherit;background:#1B3D6F;color:#fff;font-weight:600;">누계</button>
                     <button id="prodch-tgl-monthly" onclick="setProdchPeriod('당월')" style="padding:3px 12px;font-size:12px;cursor:pointer;border:none;font-family:inherit;background:#fff;color:#6B7A8D;">당월</button>
                   </div>
@@ -716,6 +720,10 @@ tfoot td { font-weight: 700; background: #F4F8FD; border-top: 1px solid var(--bo
                 <div class="chart-sub" id="chprod-sub"></div>
               </div>
               <div style="display:flex;gap:6px;align-items:center;">
+                <div style="display:flex;border:1px solid var(--border);border-radius:5px;overflow:hidden;">
+                  <button class="tgl-btn" id="chprod-rate-amt" onclick="setChProdRate('액')" style="">액</button>
+                  <button class="tgl-btn active" id="chprod-rate-pct" onclick="setChProdRate('율')" style="">율</button>
+                </div>
                 <div style="display:flex;border:1px solid var(--border);border-radius:5px;overflow:hidden;">
                   <button class="tgl-btn active" id="chprod-tgl-cumul" onclick="setChProdPeriod('누계')">누계</button>
                   <button class="tgl-btn" id="chprod-tgl-monthly" onclick="setChProdPeriod('당월')">당월</button>
@@ -1790,9 +1798,18 @@ function toggleKimchiExcl() {
     btn.style.color = kimchiExclMode ? '#fff' : '';
     btn.textContent = kimchiExclMode ? '🥬 김치 교지비 제외 ON' : '🥬 김치 교지비 제외';
   }
-  // 모든 탭 재렌더링
-  var tab = document.querySelector('.tab-btn.active');
-  if (tab) tab.click();
+  // 현재 활성 탭 명시적 재렌더링
+  var tabNames = ['dashboard','monthly','channel','chacct','chprod','item','prodch'];
+  var activeTab = null;
+  document.querySelectorAll('.tab-btn').forEach(function(b,i){ if(b.classList.contains('active')) activeTab = tabNames[i]; });
+  if (!activeTab) return;
+  if (activeTab==='dashboard') { renderDashKPIs(); renderDashSummary(); renderDashboardTable(); }
+  else if (activeTab==='monthly') { renderMonthlyCharts(); }
+  else if (activeTab==='channel') { renderChannelTable(); }
+  else if (activeTab==='chacct') { drawChAcctTable(); }
+  else if (activeTab==='chprod') { drawChProdTable(); }
+  else if (activeTab==='item') { renderTop10Table(); if(typeof renderPLItemSummary==='function') renderPLItemSummary(); }
+  else if (activeTab==='prodch') { renderProdchTab(); if(prodchS.prod) _drawProdchTable(); }
 }
 
 const dashS = { period: '누계' };
@@ -2865,6 +2882,13 @@ function setTop10View(v){top10S.view=v;top10S.page=0;renderTop10Table();}
 function setTop10Period(p){top10S.period=p;top10S.page=0;renderTop10Table();}
 function _showProdchOverlay(){var o=document.getElementById('prodch-overlay');if(o)o.style.display='flex';}
 function _hideProdchOverlay(){var o=document.getElementById('prodch-overlay');if(o)o.style.display='none';}
+function setProdchRate(r) {
+  prodchS.showRate = (r === '율');
+  var amtBtn=document.getElementById('prodch-rate-amt'), pctBtn=document.getElementById('prodch-rate-pct');
+  if(amtBtn){amtBtn.style.background=prodchS.showRate?'#fff':'#1B3D6F';amtBtn.style.color=prodchS.showRate?'#6B7A8D':'#fff';amtBtn.style.fontWeight=prodchS.showRate?'400':'600';}
+  if(pctBtn){pctBtn.style.background=prodchS.showRate?'#1B3D6F':'#fff';pctBtn.style.color=prodchS.showRate?'#fff':'#6B7A8D';pctBtn.style.fontWeight=prodchS.showRate?'600':'400';}
+  if(prodchS.prod) _drawProdchTable();
+}
 function setProdchPeriod(p){
   prodchS.period=p;
   var cumBtn=document.getElementById('prodch-tgl-cumul');
@@ -2884,16 +2908,12 @@ function _chAcctSum(ch, yr2, acct, ms) {
   if (typeof PROD_CH_ACCT_DATA === 'undefined') return 0;
   for (var prod in PROD_CH_ACCT_DATA) {
     var prodData = PROD_CH_ACCT_DATA[prod];
-    var chData = null;
-    // 첫 번째 d1에서 ch 접근 (중복 방지)
-    var d1keys = Object.keys(prodData);
-    for (var i = 0; i < d1keys.length; i++) {
-      var d1k = d1keys[i];
-      if (prodData[d1k] && prodData[d1k][ch]) { chData = prodData[d1k][ch]; break; }
+    for (var d1k in prodData) {
+      var chData = prodData[d1k][ch];
+      if (!chData || !chData[yr2] || !chData[yr2][acct]) continue;
+      var acctMon = chData[yr2][acct];
+      for (var mi = 0; mi < ms.length; mi++) { total += (acctMon[ms[mi]] || 0); }
     }
-    if (!chData || !chData[yr2] || !chData[yr2][acct]) continue;
-    var acctMon = chData[yr2][acct];
-    for (var mi = 0; mi < ms.length; mi++) { total += (acctMon[ms[mi]] || 0); }
   }
   if (kimchiExclMode && acct === '02. 매출원가') {
     total -= _kimchiExclCh(ch, yr2, ms);
@@ -2905,7 +2925,16 @@ function renderChAcctTab() {
   var listEl = document.getElementById('chacct-list');
   if (!listEl) return;
   if (typeof CH_DATA === 'undefined') return;
-  var chs = Object.keys(CH_DATA).filter(function(c){ return c !== '부가세'; });
+  var {fm, tm} = _getFromTo(); var isCumul2 = chacctS.period === '누계';
+  var ms2 = isCumul2 ? Array.from({length:tm-fm+1},function(_,i){return fm+i;}) : [tm];
+  var chs = Object.keys(CH_DATA).filter(function(c){ return c !== '부가세'; })
+    .sort(function(a,b){
+      var sa=0, sb=0;
+      var da=CH_DATA[a], db=CH_DATA[b];
+      if(da) for(var d1 in da){ var yr=da[d1]['26']; if(yr) ms2.forEach(function(m){ sa+=(yr[m]?yr[m][0]:0); }); }
+      if(db) for(var d1 in db){ var yr=db[d1]['26']; if(yr) ms2.forEach(function(m){ sb+=(yr[m]?yr[m][0]:0); }); }
+      return sb-sa;
+    });
   var html = '';
   chs.forEach(function(ch) {
     var isActive = chacctS.ch === ch;
@@ -3003,20 +3032,17 @@ function drawChAcctTable() {
   var s26 = getV('26','01. 매출액'), s25 = getV('25','01. 매출액');
 
   function acctRow(label, v26, v25, isBold, isIndent, isSub) {
-    var bg = isBold ? 'background:#EEF5FF;font-weight:700;' : (isSub ? 'background:#FAFBFD;color:#8A9BB0;' : '');
-    var pad = isIndent ? 'padding:4px 12px 4px 24px;' : 'padding:6px 12px;';
-    var labelCell = '<td style="'+pad+BD+BDR+(isBold?'font-weight:700;':'')+(isSub?'color:#8A9BB0;font-size:11px;':'')+'">'+label+'</td>';
-    var pctRow = isSub;
-    if (pctRow) {
-      return '<tr style="'+bg+'">' + labelCell
-        + '<td style="text-align:right;padding:3px 10px;'+BD+'font-size:11px;color:#8A9BB0;">'+fmtPct(v26,s26)+'</td>'
-        + '<td style="text-align:right;padding:3px 10px;'+BD+'font-size:11px;color:#8A9BB0;">'+fmtPct(v25,s25)+'</td>'
-        + '<td colspan="2" style="'+BD+BDR+'"></td>'
-        + '</tr>';
+    if (isSub) return ''; // % 별도행 비활성화 (인라인 표시로 변경)
+    var bg = isBold ? 'background:#EEF5FF;font-weight:700;' : '';
+    var pad = 'padding:6px 12px;';
+    function pctStr(v) {
+      if (!s26) return '';
+      var r = v/s26*100;
+      return '<span style="font-size:10px;color:#8A9BB0;margin-left:3px;">('+(r<0?'△':'')+Math.abs(r).toFixed(1)+'%)</span>';
     }
-    return '<tr style="'+bg+'">' + labelCell
-      + '<td style="text-align:right;padding:6px 10px;'+BD+'">'+fmtAmt(v26)+'</td>'
-      + '<td style="text-align:right;padding:6px 10px;'+BD+'color:#8A9BB0;">'+fmtAmt(v25)+'</td>'
+    return '<tr style="'+bg+'"><td style="'+pad+BD+BDR+(isBold?'font-weight:700;':'')+'">'+label+'</td>'
+      + '<td style="text-align:right;padding:6px 10px;'+BD+'white-space:nowrap;">'+fmtAmt(v26)+pctStr(v26)+'</td>'
+      + '<td style="text-align:right;padding:6px 10px;'+BD+'color:#8A9BB0;white-space:nowrap;">'+fmtAmt(v25)+pctStr(v25)+'</td>'
       + '<td style="text-align:right;padding:6px 10px;'+BD+colStyle(v26,v25)+'">'+fmtDiff(v26,v25)+'</td>'
       + '<td style="text-align:right;padding:6px 10px;'+BD+BDR+colStyle(v26,v25)+'">'+fmtGrow(v26,v25)+'</td>'
       + '</tr>';
@@ -3090,13 +3116,22 @@ function drawChAcctTable() {
 }
 
 // ─── 채널별 품목별 탭 ─────────────────────────────────────────
-const chprodS = { ch: null, page: 0, period: '누계' };
+const chprodS = { ch: null, page: 0, period: '누계', feeExpanded: false, showRate: false };
 
 function renderChProdTab() {
   var listEl = document.getElementById('chprod-list');
   if (!listEl) return;
   if (typeof CH_DATA === 'undefined') return;
-  var chs = Object.keys(CH_DATA).filter(function(c){ return c !== '부가세'; });
+  var {fm: fm2, tm: tm2} = _getFromTo(); var isCumul3 = chprodS.period === '누계';
+  var ms3 = isCumul3 ? Array.from({length:tm2-fm2+1},function(_,i){return fm2+i;}) : [tm2];
+  var chs = Object.keys(CH_DATA).filter(function(c){ return c !== '부가세'; })
+    .sort(function(a,b){
+      var sa=0, sb=0;
+      var da=CH_DATA[a], db=CH_DATA[b];
+      if(da) for(var d1 in da){ var yr=da[d1]['26']; if(yr) ms3.forEach(function(m){ sa+=(yr[m]?yr[m][0]:0); }); }
+      if(db) for(var d1 in db){ var yr=db[d1]['26']; if(yr) ms3.forEach(function(m){ sb+=(yr[m]?yr[m][0]:0); }); }
+      return sb-sa;
+    });
   var html = '';
   chs.forEach(function(ch) {
     var isActive = chprodS.ch === ch;
@@ -3114,6 +3149,14 @@ function selectChProd(ch) {
   renderChProdTab();
 }
 
+function setChProdRate(r) {
+  chprodS.showRate = (r === '율');
+  ['chprod-rate-amt','chprod-rate-pct'].forEach(function(id){
+    var el=document.getElementById(id); if(!el) return;
+    el.classList.toggle('active', id==='chprod-rate-amt' ? !chprodS.showRate : chprodS.showRate);
+  });
+  if (chprodS.ch) drawChProdTable();
+}
 function setChProdPeriod(p) {
   chprodS.period = p;
   ['chprod-tgl-cumul','chprod-tgl-monthly'].forEach(function(id){
@@ -3187,14 +3230,12 @@ function drawChProdTable() {
     if (!prodName) return _chAcctSum(ch, yr2, acct, ms) / 1000;
     if (typeof PROD_CH_ACCT_DATA === 'undefined' || !PROD_CH_ACCT_DATA[prodName]) return 0;
     var prodData = PROD_CH_ACCT_DATA[prodName];
-    var chData = null;
-    var d1keys = Object.keys(prodData);
-    for (var i = 0; i < d1keys.length; i++) {
-      if (prodData[d1keys[i]] && prodData[d1keys[i]][ch]) { chData = prodData[d1keys[i]][ch]; break; }
-    }
-    if (!chData || !chData[yr2] || !chData[yr2][acct]) return 0;
     var total = 0;
-    ms.forEach(function(m){ total += (chData[yr2][acct][m] || 0); });
+    for (var d1k in prodData) {
+      var chData = prodData[d1k][ch];
+      if (!chData || !chData[yr2] || !chData[yr2][acct]) continue;
+      ms.forEach(function(m){ total += (chData[yr2][acct][m] || 0); });
+    }
     return total / 1000;
   }
 
@@ -3229,7 +3270,7 @@ function drawChProdTable() {
     if (pn === null) label = '전체';
     else {
       var rank = chprodS.page===0 ? i : chprodS.page*5-1+i;
-      label = '제'+rank+'매출품목';
+      label = '매출'+rank+'위';
     }
     var isLast = i === curProds.length-1;
     h += '<th colspan="3" style="text-align:center;padding:5px 10px;border-bottom:1px solid #DDE8F2;'+(isLast?'':''+BDR)+'font-size:11px;color:#4D6278;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;" title="'+(pn||'전체')+'">'+(pn||'전체')+'<br><span style="font-weight:400;font-size:10px;">'+label+'</span></th>';
@@ -3240,7 +3281,7 @@ function drawChProdTable() {
     var bdr = isLast ? '' : BDR;
     h += '<th style="text-align:right;padding:5px 8px;border-bottom:2px solid #C8D8EA;color:#4D6278;font-size:10px;'+colW+'">26년</th>';
     h += '<th style="text-align:right;padding:5px 8px;border-bottom:2px solid #C8D8EA;color:#4D6278;font-size:10px;'+colW+'">25년</th>';
-    h += '<th style="text-align:right;padding:5px 8px;border-bottom:2px solid #C8D8EA;color:#4D6278;font-size:10px;'+colW+bdr+'">증감</th>';
+    h += '<th style="text-align:right;padding:5px 8px;border-bottom:2px solid #C8D8EA;color:#4D6278;font-size:10px;'+colW+bdr+'">성장/증감</th>';
   });
   h += '</tr></thead><tbody>';
 
@@ -3264,9 +3305,53 @@ function drawChProdTable() {
     {label:'당기순이익율', key:'__netR', bold:false, isPct:true}
   ];
 
+  // 지급수수료 FEE 세부 함수
+  function getChProdFeeNote(pn, yr2, ng) {
+    if (typeof FEE_NOTE_DATA === 'undefined') return 0;
+    var src = pn === null ? (FEE_NOTE_DATA[ch] && FEE_NOTE_DATA[ch]['전체']) : null;
+    if (pn !== null) {
+      // 품목별 FEE_NOTE: ch+pn 조합은 없으므로 채널 전체에서 품목 비율로 추정 (미구현시 0)
+      return 0;
+    }
+    if (!src || !src[yr2] || !src[yr2][ng]) return 0;
+    var t=0; ms.forEach(function(m){t+=(src[yr2][ng][m]||0);}); return t/1000;
+  }
   rowDefs.forEach(function(row) {
     var bg = row.bold ? 'background:#EEF5FF;font-weight:700;' : '';
     var labelPad = row.isPct ? 'padding:3px 12px 3px 24px;font-size:11px;color:#8A9BB0;' : 'padding:6px 12px;';
+    // 지급수수료: 클릭 확장
+    if (row.key === '03. 지급수수료') {
+      var exp = chprodS.feeExpanded;
+      var expBtn = '<span onclick="chprodS.feeExpanded=!chprodS.feeExpanded;drawChProdTable();" style="cursor:pointer;margin-left:6px;font-size:10px;color:#1565C0;">'+(exp?'▲ 접기':'▼ 펼치기')+'</span>';
+      h += '<tr style="background:#EEF5FF;"><td style="padding:6px 12px;'+BD+BDR+'">'+row.label+expBtn+'</td>';
+      curProds.forEach(function(pn,i){
+        var isLast=i===curProds.length-1; var bdr=isLast?'':BDR;
+        var v26=getProdAcct(pn,'26',row.key), v25=getProdAcct(pn,'25',row.key);
+        var d=v26-v25; var gp=v25?(d/Math.abs(v25)*100):null;
+        var gs=gp===null?'-':((d>0?'▲':(d<0?'▼':''))+Math.abs(gp).toFixed(1)+'%');
+        h+='<td style="text-align:right;padding:5px 8px;'+BD+'">'+fmtA(v26)+'</td>';
+        h+='<td style="text-align:right;padding:5px 8px;'+BD+'color:#8A9BB0;">'+fmtA(v25)+'</td>';
+        h+='<td style="text-align:right;padding:5px 8px;'+BD+bdr+colS(d)+'">'+gs+'</td>';
+      });
+      h += '</tr>';
+      if (exp) {
+        var groups=[{key:'판매수수료',label:'판매 수수료'},{key:'물량지원수수료',label:'물량지원 수수료'},{key:'김치인건비보정',label:'김치인건비 보정'},{key:'손익계산서차액보정',label:'손익계산서 차액보정'},{key:'미구분',label:'미구분'}];
+        groups.forEach(function(g){
+          h+='<tr style="background:#F5F8FF;"><td style="padding:4px 12px 4px 28px;'+BD+BDR+'font-size:11px;color:#4D6278;">└ '+g.label+'</td>';
+          curProds.forEach(function(pn,i){
+            var isLast=i===curProds.length-1; var bdr=isLast?'':BDR;
+            var gv26=getChProdFeeNote(pn,'26',g.key), gv25=getChProdFeeNote(pn,'25',g.key);
+            var d=gv26-gv25; var gp=gv25?(d/Math.abs(gv25)*100):null;
+            var gs=gp===null?'-':((d>0?'▲':(d<0?'▼':''))+Math.abs(gp).toFixed(1)+'%');
+            h+='<td style="text-align:right;padding:4px 8px;'+BD+'font-size:11px;">'+fmtA(gv26)+'</td>';
+            h+='<td style="text-align:right;padding:4px 8px;'+BD+'color:#8A9BB0;font-size:11px;">'+fmtA(gv25)+'</td>';
+            h+='<td style="text-align:right;padding:4px 8px;'+BD+bdr+'font-size:11px;'+colS(d)+'">'+gs+'</td>';
+          });
+          h+='</tr>';
+        });
+      }
+      return;
+    }
     h += '<tr style="'+bg+'"><td style="'+labelPad+BD+BDR+'">'+row.label+'</td>';
     curProds.forEach(function(pn, i) {
       var isLast = i === curProds.length-1;
@@ -3286,9 +3371,23 @@ function drawChProdTable() {
         return;
       } else { v26 = getProdAcct(pn,'26',row.key); v25 = getProdAcct(pn,'25',row.key); }
       var d = v26 - v25;
-      h += '<td style="text-align:right;padding:5px 8px;'+BD+'">'+fmtA(v26)+'</td>';
-      h += '<td style="text-align:right;padding:5px 8px;'+BD+'color:#8A9BB0;">'+fmtA(v25)+'</td>';
-      h += '<td style="text-align:right;padding:5px 8px;'+BD+bdr+colS(d)+'">'+fmtA(d)+'</td>';
+      var growPct = v25 ? (d/Math.abs(v25)*100) : null;
+      var growStr = growPct===null ? '-' : ((d>0?'▲':(d<0?'▼':''))+Math.abs(growPct).toFixed(1)+'%');
+      // 율 모드: 02~13 계정은 매출액 대비 % 표시
+      var disp26=v26, disp25=v25, dispGrow=growStr, isSalesRow=(row&&row.key==='01. 매출액');
+      if (chprodS.showRate && row && !row.bold && !row.isPct && !isSalesRow) {
+        var base26=getProdAcct(pn,'26','01. 매출액'), base25=getProdAcct(pn,'25','01. 매출액');
+        var r26=base26?(v26/base26*100):null, r25=base25?(v25/base25*100):null;
+        function rpFmt(r){return r===null?'-':((r<0?'△':'')+Math.abs(r).toFixed(1)+'%');}
+        h += '<td style="text-align:right;padding:5px 8px;'+BD+'">'+rpFmt(r26)+'</td>';
+        h += '<td style="text-align:right;padding:5px 8px;'+BD+'color:#8A9BB0;">'+rpFmt(r25)+'</td>';
+        var dr=(r26!==null&&r25!==null)?r26-r25:null;
+        h += '<td style="text-align:right;padding:5px 8px;'+BD+bdr+'">'+( dr===null?'-':((dr<0?'△':'')+Math.abs(dr).toFixed(1)+'%p') )+'</td>';
+      } else {
+        h += '<td style="text-align:right;padding:5px 8px;'+BD+'">'+fmtA(disp26)+'</td>';
+        h += '<td style="text-align:right;padding:5px 8px;'+BD+'color:#8A9BB0;">'+fmtA(disp25)+'</td>';
+        h += '<td style="text-align:right;padding:5px 8px;'+BD+bdr+colS(d)+'">'+growStr+'</td>';
+      }
     });
     h += '</tr>';
   });
@@ -3312,7 +3411,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 // ────────────────────────────────────────────────────
 // 품목별 채널별 탭
-const prodchS = { prod: null, page: 0, d1: '판매사업', period: '누계' };
+const prodchS = { prod: null, page: 0, d1: '판매사업', period: '누계', showRate: false };
 
 function renderProdchTab() {
   if (typeof MDATA === 'undefined') return;
