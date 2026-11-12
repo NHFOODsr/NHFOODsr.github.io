@@ -630,6 +630,7 @@ function processData(rows) {
   if (!masterData || !rows) return null;
   const results = [];
   const dataRows = rows.filter((r, i) => i >= 2 && r && r[COL.품번] && String(r[COL.품번]).trim());
+  const chMidSet = new Set(dataRows.map(r => String(r[COL.CH중] || '').trim().toLowerCase()));
 
   for (const mp of masterData) {
     const code = mp.code;
@@ -640,9 +641,19 @@ function processData(rows) {
     });
 
     // 채널 전용 상품: 해당 채널(거래처 중분류) 매출만 집계
+    // 리스트의 채널전용 칸에 '천안축산농협 입고분만'처럼 실제 거래처 중분류가 아닌 설명 문구가 들어오면
+    // 필터를 걸지 않는다 (걸면 매출이 전부 걸러져 출시예정으로 표시됨). 문구는 표의 배지로만 표시.
+    // 설명 문구형(입고분만 등)은 해당 품번의 출시월 이전 매출(이전 공급분)을 집계에서 뺀다.
+    let channelFilter = '';
+    let fromMonIdx = 0;
     if (mp.channelOnly) {
       const ch = mp.channelOnly.trim().toLowerCase();
-      matchRows = matchRows.filter(r => String(r[COL.CH중] || '').trim().toLowerCase() === ch);
+      if (chMidSet.has(ch)) {
+        channelFilter = ch;
+        matchRows = matchRows.filter(r => String(r[COL.CH중] || '').trim().toLowerCase() === ch);
+      } else if (mp.launchYear === DATA_YEAR && mp.launchMon > 0) {
+        fromMonIdx = mp.launchMon - 1;
+      }
     }
 
     const monthly = Array(12).fill(0);
@@ -654,7 +665,7 @@ function processData(rows) {
       const ch = String(row[COL.CH중] || row[COL.CH대] || '기타').trim() || '기타';
       if (!channelMap[ch]) channelMap[ch] = 0;
       if (!channelQtyMap[ch]) channelQtyMap[ch] = 0;
-      for (let m = 0; m < 12; m++) {
+      for (let m = fromMonIdx; m < 12; m++) {
         const val = Number(row[COL.금액1월 + m * 3] || 0);
         monthly[m] += val;
         channelMap[ch] += val;
@@ -680,6 +691,7 @@ function processData(rows) {
       launchYear: mp.launchYear,
       launchDate: mp.launchDate || null,
       channelOnly: mp.channelOnly || '',
+      channelFilter,
       monthly,
       channelMap,
       total,
@@ -1000,7 +1012,7 @@ function renderStoreTab() {
   // channelOnly 맵: 제품 코드 → 전용 채널 (소문자) — 아래 filteredRows/sumAmount가 참조하므로 먼저 구성
   var channelOnlyMap = {};
   processed.forEach(function(p) {
-    if (p.channelOnly) channelOnlyMap[String(p.code).trim()] = p.channelOnly.trim().toLowerCase();
+    if (p.channelFilter) channelOnlyMap[String(p.code).trim()] = p.channelFilter;
   });
 
   // 매출 발생 품목만 표시
