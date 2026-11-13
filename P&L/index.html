@@ -1239,7 +1239,7 @@ function switchTab(tab) {
   if(tab==='chprod'){setTimeout(function(){renderChProdTab();},0);}
   if(tab==='item'){setTimeout(function(){renderTop10Table();renderPLItemSummary();},0);}
   if(tab==='prodch'){setTimeout(function(){try{renderProdchTab();if(prodchS&&prodchS.prod)_drawProdchTable();}catch(e){console.error(e);}finally{_hideProdchOverlay();}},0);}
-  if(tab==='monthly'){setTimeout(function(){renderMonthlyCharts();},0);}
+  if(tab==='monthly'){setTimeout(function(){renderMonthlyCharts();renderMonthlyTable(state.data,state.currYr||'26',state.prevYr||'25',state.fromM||1,state.toM||9,state.selChs||[]);},0);}
   if(tab==='dashboard'){setTimeout(function(){renderDashboardTable();},0);}
 }
 
@@ -1531,9 +1531,10 @@ function renderMonthlyTable(data, currYr, prevYr, fromM, toM, selChs) {
     return result;
   }
   function _mthProfit(accts, yr2, ms) {
-    const base = calcContrib(accts);
-    if (!isNet) return base;
+    var base = calcContrib(accts);
     const msArr = Array.isArray(ms) ? ms : [ms];
+    if (kimchiExclMode) base -= _kimchiExclAmt('전체', yr2, msArr);
+    if (!isNet) return base;
     return base - _sumAD('전체',yr2,'10. 마케팅부 판관비',msArr) - _sumAD('전체',yr2,'11. 경영지원부 판관비',msArr) + _sumAD('전체',yr2,'12. 영업외수익',msArr) - _sumAD('전체',yr2,'13. 영업외비용',msArr);
   }
 
