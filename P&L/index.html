@@ -1241,7 +1241,7 @@ function switchTab(tab) {
   if(tab==='chacct'){setTimeout(function(){renderChAcctTab();},0);}
   if(tab==='chprod'){setTimeout(function(){renderChProdTab();},0);}
   if(tab==='item'){setTimeout(function(){renderTop10Table();renderPLItemSummary();},0);}
-  if(tab==='prodch'){setTimeout(function(){renderProdchTab();if(prodchS&&prodchS.prod)_drawProdchTable();},0);}
+  if(tab==='prodch'){setTimeout(function(){try{renderProdchTab();if(prodchS&&prodchS.prod)_drawProdchTable();}catch(e){console.error(e);}finally{_hideProdchOverlay();}},0);}
   if(tab==='monthly'){setTimeout(function(){renderMonthlyCharts();},0);}
   if(tab==='dashboard'){setTimeout(function(){renderDashboardTable();},0);}
 }
@@ -1906,7 +1906,7 @@ function renderChannelTable() {
 
   let h=`<thead><tr style="background:#F4F8FD;">
     <th rowspan="2" style="text-align:left;padding:7px 12px;border-bottom:1px solid #C8D8EA;${BDR}vertical-align:middle;">채널</th>
-    <th colspan="5" style="text-align:center;padding:5px 10px;border-bottom:1px solid #DDE8F2;${BDR}font-weight:700;color:#4D6278;">매출액</th>
+    <th colspan="4" style="text-align:center;padding:5px 10px;border-bottom:1px solid #DDE8F2;${BDR}font-weight:700;color:#4D6278;">매출액</th>
     <th colspan="3" style="text-align:center;padding:5px 10px;border-bottom:1px solid #DDE8F2;${BDR}font-weight:700;color:#4D6278;">공헌이익</th>
     <th colspan="3" style="text-align:center;padding:5px 10px;border-bottom:1px solid #DDE8F2;${BDR}font-weight:700;color:#4D6278;">공헌이익율</th>
     <th colspan="3" style="text-align:center;padding:5px 10px;border-bottom:1px solid #DDE8F2;${BDR}font-weight:700;color:#4D6278;">당기순이익</th>
@@ -2051,7 +2051,7 @@ function _col(v) { return v==null||!isFinite(v) ? '' : (v>=0?'color:#1EB86F':'co
 function _sumSC(yr, ms, prod, d1filter) {
   const d1map = (MDATA[prod] || {});
   let s=0, c=0;
-  const d1keys = [d1filter];
+  const d1keys = d1filter === '전체' ? Object.keys(d1map) : [d1filter];
   for (const d1 of d1keys) {
     const yrmap = (d1map[d1] || {})[yr] || {};
     for (const m of ms) {
@@ -2375,19 +2375,19 @@ function renderDashboardTable() {
     {key:'cogs',      label:'매출원가',                   indent:1},
     {key:'rate_cogs', label:'원가율',                    indent:1, isPct:true},
     {key:'sf',        label:'판매경비',                   indent:1, isGrp:true},
-    {key:'03. 지급수수료',         label:'지급수수료',         indent:2},
-    {key:'04. 시장개척비',         label:'시장개척비',         indent:2},
-    {key:'05. 시험개발비',         label:'시험개발비',         indent:2},
-    {key:'06. 운반비',             label:'운반비',             indent:2},
-    {key:'07. 선전광고료',         label:'선전광고료',         indent:2},
-    {key:'08. 용역비',             label:'용역비',             indent:2},
-    {key:'09. 전자상거래지급수수료', label:'전자상거래지급수수료', indent:2},
+    {key:'03. 지급수수료',         label:'지급수수료',         indent:2, isAcctPct:true},
+    {key:'04. 시장개척비',         label:'시장개척비',         indent:2, isAcctPct:true},
+    {key:'05. 시험개발비',         label:'시험개발비',         indent:2, isAcctPct:true},
+    {key:'06. 운반비',             label:'운반비',             indent:2, isAcctPct:true},
+    {key:'07. 선전광고료',         label:'선전광고료',         indent:2, isAcctPct:true},
+    {key:'08. 용역비',             label:'용역비',             indent:2, isAcctPct:true},
+    {key:'09. 전자상거래지급수수료', label:'전자상거래지급수수료', indent:2, isAcctPct:true},
     {key:'contrib',      label:'공헌이익',                indent:0, bold:true, isAmtDiff:true},
     {key:'rate_contrib', label:'공헌이익율',               indent:0, isPct:true, bold:true},
-    {key:'mk',           label:'마케팅부 판관비',           indent:1},
-    {key:'mg',           label:'경영지원부 판관비',         indent:1},
-    {key:'oi',           label:'영업외수익',                indent:1},
-    {key:'oe',           label:'영업외비용',                indent:1},
+    {key:'mk',           label:'마케팅부 판관비',           indent:1, isAcctPct:true},
+    {key:'mg',           label:'경영지원부 판관비',         indent:1, isAcctPct:true},
+    {key:'oi',           label:'영업외수익',                indent:1, isAcctPct:true},
+    {key:'oe',           label:'영업외비용',                indent:1, isAcctPct:true},
     {key:'net',          label:'당기순이익',                indent:0, bold:true, isAmtDiff:true},
     {key:'rate_net',     label:'당기순이익율',              indent:0, isPct:true, bold:true},
   ];
@@ -2898,7 +2898,7 @@ function setProdchRate(r) {
   var amtBtn=document.getElementById('prodch-rate-amt'), pctBtn=document.getElementById('prodch-rate-pct');
   if(amtBtn){amtBtn.style.background=prodchS.showRate?'#fff':'#1B3D6F';amtBtn.style.color=prodchS.showRate?'#6B7A8D':'#fff';amtBtn.style.fontWeight=prodchS.showRate?'400':'600';}
   if(pctBtn){pctBtn.style.background=prodchS.showRate?'#1B3D6F':'#fff';pctBtn.style.color=prodchS.showRate?'#fff':'#6B7A8D';pctBtn.style.fontWeight=prodchS.showRate?'600':'400';}
-  if(prodchS.prod) _drawProdchTable();
+  if(prodchS.prod){_showProdchOverlay();setTimeout(function(){try{_drawProdchTable();}catch(e){console.error(e);}finally{_hideProdchOverlay();}},0);}
 }
 function setProdchPeriod(p){
   prodchS.period=p;
@@ -2906,7 +2906,7 @@ function setProdchPeriod(p){
   var monBtn=document.getElementById('prodch-tgl-monthly');
   if(cumBtn){cumBtn.style.background=p==='누계'?'#1B3D6F':'#fff';cumBtn.style.color=p==='누계'?'#fff':'#6B7A8D';cumBtn.style.fontWeight=p==='누계'?'600':'400';}
   if(monBtn){monBtn.style.background=p==='당월'?'#1B3D6F':'#fff';monBtn.style.color=p==='당월'?'#fff':'#6B7A8D';monBtn.style.fontWeight=p==='당월'?'600':'400';}
-  if(prodchS.prod){_showProdchOverlay();setTimeout(function(){renderProdchTab();if(prodchS.prod)_drawProdchTable();_hideProdchOverlay();},0);}else{renderProdchTab();}
+  if(prodchS.prod){_showProdchOverlay();setTimeout(function(){try{renderProdchTab();if(prodchS.prod)_drawProdchTable();}catch(e){console.error(e);}finally{_hideProdchOverlay();}},0);}else{renderProdchTab();}
 }
 function changeTop10Page(d){top10S.page+=d;renderTop10Table();}
 function setTop10D1(d1){top10S.d1=d1;top10S.page=0;renderTop10Table();}
@@ -3063,11 +3063,11 @@ function drawChAcctTable() {
   var sM26 = getV('26','01. 매출액',msMonth), sM25 = getV('25','01. 매출액',msMonth);
 
   var thS  = 'text-align:right;padding:4px 8px;background:#F4F8FD;border-bottom:2px solid #C8D8EA;font-size:10px;color:#4D6278;';
-  var thLS = 'text-align:left;padding:4px 8px;background:#F4F8FD;border-bottom:2px solid #C8D8EA;font-size:10px;color:#4D6278;'+BDR;
+  var thLS = 'text-align:left;padding:4px 8px;background:#F4F8FD;border-bottom:2px solid #C8D8EA;font-size:10px;color:#4D6278;width:120px;'+BDR;
   var pctS = 'text-align:right;padding:4px 4px;background:#F4F8FD;border-bottom:2px solid #C8D8EA;font-size:9px;color:#8A9BB0;';
   var grpH = 'text-align:center;padding:3px 6px;background:#EAF0FB;border-bottom:1px solid #C8D8EA;font-size:10px;font-weight:700;color:#1B3D6F;';
 
-  var h = '<table style="width:100%;border-collapse:collapse;font-size:11px;font-variant-numeric:tabular-nums;">'
+  var h = '<table style="width:100%;border-collapse:collapse;font-size:11px;font-variant-numeric:tabular-nums;table-layout:fixed;">'
     + '<thead>'
     + '<tr>'
     + '<th style="'+grpH+BDR+'"> </th>'
@@ -3642,7 +3642,7 @@ function _setProdchStep(active) {
 function moveProdchPage(dir) {
   prodchS.page += dir;
   _showProdchOverlay();
-  setTimeout(function(){_drawProdchTable();_hideProdchOverlay();},0);
+  setTimeout(function(){try{_drawProdchTable();}catch(e){console.error(e);}finally{_hideProdchOverlay();}},0);
 }
 
 function _drawProdchTable() {
@@ -3826,10 +3826,15 @@ function _drawProdchTable() {
 
       if (row.isPct) {
         var diff = (v26!=null&&v25!=null) ? v26-v25 : null;
-        h += '<td style="'+tdR+'">'+_fmtP(v26)+'</td><td style="'+tdR+'color:#8A9BB0;">'+_fmtP(v25)+'</td><td style="'+tdR+colSt+_col(diff)+'">'+_fmtPp(diff)+'</td>';
+        h += '<td style="'+tdR+rowFont+'">'+_fmtP(v26)+'</td><td style="'+tdR+'color:#8A9BB0;'+rowFont+'">'+_fmtP(v25)+'</td><td style="'+tdR+colSt+_col(diff)+rowFont+'">'+_fmtPp(diff)+'</td>';
       } else if (row.isAmtDiff) {
         var diff2 = (v26!=null&&v25!=null) ? v26-v25 : null;
         h += '<td style="'+tdR+'">'+_fmtM(v26)+'</td><td style="'+tdR+'color:#8A9BB0;">'+_fmtM(v25)+'</td><td style="'+tdR+colSt+_col(diff2)+'">'+_fmtGrow(diff2,true)+'</td>';
+      } else if (prodchS.showRate && row.isAcctPct) {
+        var pv26 = (s26 && v26 != null) ? v26/s26 : null;
+        var pv25 = (s25 && v25 != null) ? v25/s25 : null;
+        var pdiff = (pv26!=null&&pv25!=null) ? pv26-pv25 : null;
+        h += '<td style="'+tdR+'">'+_fmtP(pv26)+'</td><td style="'+tdR+'color:#8A9BB0;">'+_fmtP(pv25)+'</td><td style="'+tdR+colSt+_col(pdiff)+'">'+_fmtPp(pdiff)+'</td>';
       } else {
         var grow = (v25!=null&&v25!==0) ? (v26-v25)/Math.abs(v25) : null;
         h += '<td style="'+tdR+'">'+_fmtM(v26)+'</td><td style="'+tdR+'color:#8A9BB0;">'+_fmtM(v25)+'</td><td style="'+tdR+colSt+_col(grow)+'">'+_fmtGrow(grow,false)+'</td>';
