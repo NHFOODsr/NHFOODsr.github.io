@@ -610,8 +610,8 @@ tfoot td { font-weight: 700; background: #F4F8FD; border-top: 1px solid var(--bo
                 </div>
                 <div style="display:flex;gap:6px;align-items:center;">
                   <div style="display:flex;border:1px solid var(--border);border-radius:5px;overflow:hidden;">
-                    <button id="prodch-rate-amt" onclick="setProdchRate('액')" style="padding:3px 10px;font-size:12px;cursor:pointer;border:none;font-family:inherit;background:#fff;color:#6B7A8D;">액</button>
-                    <button id="prodch-rate-pct" onclick="setProdchRate('율')" style="padding:3px 10px;font-size:12px;cursor:pointer;border:none;font-family:inherit;background:#1B3D6F;color:#fff;font-weight:600;">율</button>
+                    <button id="prodch-rate-amt" onclick="setProdchRate('액')" style="padding:3px 10px;font-size:12px;cursor:pointer;border:none;font-family:inherit;background:#1B3D6F;color:#fff;font-weight:600;">액</button>
+                    <button id="prodch-rate-pct" onclick="setProdchRate('율')" style="padding:3px 10px;font-size:12px;cursor:pointer;border:none;font-family:inherit;background:#fff;color:#6B7A8D;">율</button>
                   </div>
                   <div style="display:flex;border:1px solid var(--border);border-radius:5px;overflow:hidden;">
                     <button id="prodch-tgl-cumul" onclick="setProdchPeriod('누계')" style="padding:3px 12px;font-size:12px;cursor:pointer;border:none;font-family:inherit;background:#1B3D6F;color:#fff;font-weight:600;">누계</button>
@@ -700,10 +700,7 @@ tfoot td { font-weight: 700; background: #F4F8FD; border-top: 1px solid var(--bo
                 <h3 id="chacct-title" style="margin:0;font-size:14px;color:#1B3D6F;"></h3>
                 <div class="chart-sub" id="chacct-sub"></div>
               </div>
-              <div style="display:flex;border:1px solid var(--border);border-radius:5px;overflow:hidden;">
-                <button class="tgl-btn active" id="chacct-tgl-cumul" onclick="setChAcctPeriod('누계')">누계</button>
-                <button class="tgl-btn" id="chacct-tgl-monthly" onclick="setChAcctPeriod('당월')">당월</button>
-              </div>
+
             </div>
             <div style="overflow-x:auto;">
               <table id="chacct-table" style="width:100%;border-collapse:collapse;font-size:12px;font-variant-numeric:tabular-nums;"></table>
@@ -3130,12 +3127,15 @@ function drawChAcctTable() {
         + '<td style="'+pCS+'">'+fp(mV25,sM25)+'</td>'
         + '</tr>';
       if (exp) {
-        var feeGroups = [
-          {key:'온라인수수료',label:'온라인수수료'},
-          {key:'홈쇼핑수수료',label:'홈쇼핑수수료'},
-          {key:'판촉비',label:'판촉비'},
-          {key:'기타',label:'기타'}
-        ];
+        // FEE_NOTE_DATA 실제 키 동적 추출
+        var _feeD = typeof FEE_NOTE_DATA !== 'undefined' && FEE_NOTE_DATA[ch] && FEE_NOTE_DATA[ch]['전체'];
+        var _feeKeys = [];
+        if (_feeD) {
+          var _ks = new Set();
+          ['25','26'].forEach(function(y){ if(_feeD[y]) Object.keys(_feeD[y]).forEach(function(k){_ks.add(k);}); });
+          _feeKeys = Array.from(_ks);
+        }
+        var feeGroups = _feeKeys.map(function(k){ return {key:k,label:k}; });
         var subBg = 'background:#F7FAFF;';
         feeGroups.forEach(function(g) {
           var gcV26 = getFeeNote('26',g.key,msCumul), gcV25 = getFeeNote('25',g.key,msCumul);
