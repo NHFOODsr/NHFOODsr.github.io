@@ -3088,19 +3088,20 @@ function drawChAcctTable() {
   function acctRow(label, cV26, cV25, mV26, mV25, isBold, isSub) {
     if (isSub) return '';
     var bg = isBold ? 'background:#EEF5FF;font-weight:700;' : '';
-    var pad = 'padding:5px 6px;';
+    var padL = 'padding:4px 5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;';
+    var padV = 'text-align:right;padding:4px 3px;';
     function pctC(v, s) { if (!s) return '-'; var r=v/s*100; return (r<0?'△':'')+Math.abs(r).toFixed(1)+'%'; }
-    var pCS = 'text-align:right;padding:5px 4px;'+BD+'font-size:9px;color:#8A9BB0;';
+    var pCS = 'text-align:right;padding:4px 2px;'+BD+'font-size:9px;color:#8A9BB0;';
     return '<tr style="'+bg+'">'
-      + '<td style="'+pad+BD+BDR+(isBold?'font-weight:700;':'')+'">'+label+'</td>'
-      + '<td style="text-align:right;padding:5px 8px;'+BD+'">'+fmtAmtR(cV26)+'</td>'
+      + '<td style="'+padL+BD+BDR+(isBold?'font-weight:700;':'')+'">'+label+'</td>'
+      + '<td style="'+padV+BD+'">'+fmtAmtR(cV26)+'</td>'
       + '<td style="'+pCS+'">'+pctC(cV26,sC26)+'</td>'
-      + '<td style="text-align:right;padding:5px 8px;'+BD+'color:#8A9BB0;">'+fmtAmtR(cV25)+'</td>'
+      + '<td style="'+padV+BD+'color:#8A9BB0;">'+fmtAmtR(cV25)+'</td>'
       + '<td style="'+pCS+'">'+pctC(cV25,sC25)+'</td>'
-      + '<td style="text-align:right;padding:5px 8px;'+BD+BDR+colS(cV26,cV25)+'">'+fmtGrowS(cV26,cV25)+'</td>'
-      + '<td style="text-align:right;padding:5px 8px;'+BD+'">'+fmtAmtR(mV26)+'</td>'
+      + '<td style="'+padV+BD+BDR+colS(cV26,cV25)+'">'+fmtGrowS(cV26,cV25)+'</td>'
+      + '<td style="'+padV+BD+'">'+fmtAmtR(mV26)+'</td>'
       + '<td style="'+pCS+'">'+pctC(mV26,sM26)+'</td>'
-      + '<td style="text-align:right;padding:5px 8px;'+BD+'color:#8A9BB0;">'+fmtAmtR(mV25)+'</td>'
+      + '<td style="'+padV+BD+'color:#8A9BB0;">'+fmtAmtR(mV25)+'</td>'
       + '<td style="'+pCS+'">'+pctC(mV25,sM25)+'</td>'
       + '</tr>';
   }
@@ -3114,17 +3115,17 @@ function drawChAcctTable() {
         + 'style="cursor:pointer;margin-left:6px;font-size:10px;color:#1565C0;">'
         + (exp ? '▲ 접기' : '▼ 펼치기') + '</span>';
       var bg = 'background:#EEF5FF;';
-      var pCS = 'text-align:right;padding:5px 4px;border-bottom:1px solid #DDE8F2;font-size:9px;color:#8A9BB0;';
+      var pCS = 'text-align:right;padding:4px 2px;border-bottom:1px solid #DDE8F2;font-size:9px;color:#8A9BB0;';
       function fp(v,s){ if(!s)return '-'; var r=v/s*100; return (r<0?'△':'')+Math.abs(r).toFixed(1)+'%'; }
-      h += '<tr style="'+bg+'"><td style="padding:5px 10px;border-bottom:1px solid #DDE8F2;border-right:1px solid #DDE8F2;">' + acct + expandBtn + '</td>'
-        + '<td style="text-align:right;padding:5px 8px;border-bottom:1px solid #DDE8F2;">' + fmtAmtR(cV26) + '</td>'
+      h += '<tr style="'+bg+'"><td style="padding:4px 5px;white-space:nowrap;overflow:hidden;border-bottom:1px solid #DDE8F2;border-right:1px solid #DDE8F2;">' + acct + expandBtn + '</td>'
+        + '<td style="text-align:right;padding:4px 3px;border-bottom:1px solid #DDE8F2;">' + fmtAmtR(cV26) + '</td>'
         + '<td style="'+pCS+'">'+fp(cV26,sC26)+'</td>'
-        + '<td style="text-align:right;padding:5px 8px;border-bottom:1px solid #DDE8F2;color:#8A9BB0;">' + fmtAmtR(cV25) + '</td>'
+        + '<td style="text-align:right;padding:4px 3px;border-bottom:1px solid #DDE8F2;color:#8A9BB0;">' + fmtAmtR(cV25) + '</td>'
         + '<td style="'+pCS+'">'+fp(cV25,sC25)+'</td>'
-        + '<td style="text-align:right;padding:5px 8px;border-bottom:1px solid #DDE8F2;border-right:1px solid #DDE8F2;'+colS(cV26,cV25)+'">'+fmtGrowS(cV26,cV25)+'</td>'
-        + '<td style="text-align:right;padding:5px 8px;border-bottom:1px solid #DDE8F2;">' + fmtAmtR(mV26) + '</td>'
+        + '<td style="text-align:right;padding:4px 3px;border-bottom:1px solid #DDE8F2;border-right:1px solid #DDE8F2;'+colS(cV26,cV25)+'">'+fmtGrowS(cV26,cV25)+'</td>'
+        + '<td style="text-align:right;padding:4px 3px;border-bottom:1px solid #DDE8F2;">' + fmtAmtR(mV26) + '</td>'
         + '<td style="'+pCS+'">'+fp(mV26,sM26)+'</td>'
-        + '<td style="text-align:right;padding:5px 8px;border-bottom:1px solid #DDE8F2;color:#8A9BB0;">' + fmtAmtR(mV25) + '</td>'
+        + '<td style="text-align:right;padding:4px 3px;border-bottom:1px solid #DDE8F2;color:#8A9BB0;">' + fmtAmtR(mV25) + '</td>'
         + '<td style="'+pCS+'">'+fp(mV25,sM25)+'</td>'
         + '</tr>';
       if (exp) {
@@ -3141,16 +3142,16 @@ function drawChAcctTable() {
         feeGroups.forEach(function(g) {
           var gcV26 = getFeeNote('26',g.key,msCumul), gcV25 = getFeeNote('25',g.key,msCumul);
           var gmV26 = getFeeNote('26',g.key,msMonth), gmV25 = getFeeNote('25',g.key,msMonth);
-          var gPC = 'text-align:right;padding:4px 4px;border-bottom:1px solid #EEF3FA;font-size:9px;color:#8A9BB0;';
-          h += '<tr style="'+subBg+'"><td style="padding:4px 10px 4px 24px;border-bottom:1px solid #EEF3FA;border-right:1px solid #DDE8F2;font-size:11px;color:#4D6278;">└ '+g.label+'</td>'
-            + '<td style="text-align:right;padding:4px 8px;border-bottom:1px solid #EEF3FA;font-size:11px;">'+fmtAmtR(gcV26)+'</td>'
+          var gPC = 'text-align:right;padding:3px 2px;border-bottom:1px solid #EEF3FA;font-size:9px;color:#8A9BB0;';
+          h += '<tr style="'+subBg+'"><td style="padding:3px 5px 3px 16px;white-space:nowrap;overflow:hidden;border-bottom:1px solid #EEF3FA;border-right:1px solid #DDE8F2;font-size:11px;color:#4D6278;">└ '+g.label+'</td>'
+            + '<td style="text-align:right;padding:3px 3px;border-bottom:1px solid #EEF3FA;font-size:11px;">'+fmtAmtR(gcV26)+'</td>'
             + '<td style="'+gPC+'">'+fp(gcV26,sC26)+'</td>'
-            + '<td style="text-align:right;padding:4px 8px;border-bottom:1px solid #EEF3FA;color:#8A9BB0;font-size:11px;">'+fmtAmtR(gcV25)+'</td>'
+            + '<td style="text-align:right;padding:3px 3px;border-bottom:1px solid #EEF3FA;color:#8A9BB0;font-size:11px;">'+fmtAmtR(gcV25)+'</td>'
             + '<td style="'+gPC+'">'+fp(gcV25,sC25)+'</td>'
-            + '<td style="text-align:right;padding:4px 8px;border-bottom:1px solid #EEF3FA;border-right:1px solid #DDE8F2;font-size:11px;'+colS(gcV26,gcV25)+'">'+fmtGrowS(gcV26,gcV25)+'</td>'
-            + '<td style="text-align:right;padding:4px 8px;border-bottom:1px solid #EEF3FA;font-size:11px;">'+fmtAmtR(gmV26)+'</td>'
+            + '<td style="text-align:right;padding:3px 3px;border-bottom:1px solid #EEF3FA;border-right:1px solid #DDE8F2;font-size:11px;'+colS(gcV26,gcV25)+'">'+fmtGrowS(gcV26,gcV25)+'</td>'
+            + '<td style="text-align:right;padding:3px 3px;border-bottom:1px solid #EEF3FA;font-size:11px;">'+fmtAmtR(gmV26)+'</td>'
             + '<td style="'+gPC+'">'+fp(gmV26,sM26)+'</td>'
-            + '<td style="text-align:right;padding:4px 8px;border-bottom:1px solid #EEF3FA;color:#8A9BB0;font-size:11px;">'+fmtAmtR(gmV25)+'</td>'
+            + '<td style="text-align:right;padding:3px 3px;border-bottom:1px solid #EEF3FA;color:#8A9BB0;font-size:11px;">'+fmtAmtR(gmV25)+'</td>'
             + '<td style="'+gPC+'">'+fp(gmV25,sM25)+'</td>'
             + '</tr>';
         });
