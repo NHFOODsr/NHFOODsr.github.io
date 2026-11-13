@@ -440,11 +440,11 @@ tfoot td { font-weight: 700; background: #F4F8FD; border-top: 1px solid var(--bo
       <button class="tab-btn active" onclick="switchTab('dashboard')">📊 대시보드</button>
       <button class="tab-btn" onclick="switchTab('monthly')">📅 월별 상세분석</button>
       <div class="tab-sep"></div>
-      <button class="tab-btn tab-ch" onclick="switchTab('channel')">🏢 채널별 상세분석</button>
-      <button class="tab-btn tab-ch" onclick="switchTab('chacct')">🏢 채널별 상세(계정)</button>
+      <button class="tab-btn tab-ch" onclick="switchTab('channel')">🏢 채널별 분석
+      <button class="tab-btn tab-ch" onclick="switchTab('chacct')">🏢 채널별 계정별</button>
       <button class="tab-btn tab-ch" onclick="switchTab('chprod')">🏢 채널별 품목별</button>
       <div class="tab-sep"></div>
-      <button class="tab-btn tab-item" onclick="switchTab('item')">📦 품목별 상세분석</button>
+      <button class="tab-btn tab-item" onclick="switchTab('item')">📦 품목별 분석
       <button class="tab-btn tab-item" onclick="switchTab('prodch')">📦 품목별 채널별</button>
     </div>
 
@@ -1811,7 +1811,10 @@ function toggleKimchiExcl() {
   var tabNames = ['dashboard','monthly','channel','chacct','chprod','item','prodch'];
   var activeTab = null;
   document.querySelectorAll('.tab-btn').forEach(function(b,i){ if(b.classList.contains('active')) activeTab = tabNames[i]; });
-  if (activeTab) switchTab(activeTab);
+  if (activeTab) {
+    if (activeTab === 'prodch' && prodchS && prodchS.prod) _showProdchOverlay();
+    switchTab(activeTab);
+  }
 }
 
 const dashS = { period: '누계' };
@@ -1837,6 +1840,7 @@ function _sumCH(ch, d1filter, yr2, ms) {
     const yrmap=(chData[d1]||{})[yr2]||{};
     for(const m of ms){const mc=yrmap[String(m)];if(mc){s+=mc[0];c+=mc[1];}}
   }
+  if (kimchiExclMode && yr2 === '26') c -= _kimchiExclCh(ch, yr2, ms);
   return [s,c];
 }
 
@@ -2902,7 +2906,7 @@ function setProdchPeriod(p){
   var monBtn=document.getElementById('prodch-tgl-monthly');
   if(cumBtn){cumBtn.style.background=p==='누계'?'#1B3D6F':'#fff';cumBtn.style.color=p==='누계'?'#fff':'#6B7A8D';cumBtn.style.fontWeight=p==='누계'?'600':'400';}
   if(monBtn){monBtn.style.background=p==='당월'?'#1B3D6F':'#fff';monBtn.style.color=p==='당월'?'#fff':'#6B7A8D';monBtn.style.fontWeight=p==='당월'?'600':'400';}
-  if(prodchS.prod){_showProdchOverlay();setTimeout(function(){renderProdchTab();_hideProdchOverlay();},0);}else{renderProdchTab();}
+  if(prodchS.prod){_showProdchOverlay();setTimeout(function(){renderProdchTab();if(prodchS.prod)_drawProdchTable();_hideProdchOverlay();},0);}else{renderProdchTab();}
 }
 function changeTop10Page(d){top10S.page+=d;renderTop10Table();}
 function setTop10D1(d1){top10S.d1=d1;top10S.page=0;renderTop10Table();}
@@ -3019,9 +3023,9 @@ function drawChAcctTable() {
   if (titleEl) titleEl.textContent = ch + ' 채널 계정별 손익';
 
   var {fm, tm} = _getFromTo();
-  var isCumul = chacctS.period === '누계';
-  var ms = isCumul ? Array.from({length:tm-fm+1},function(_,i){return fm+i;}) : [tm];
-  if (subEl) subEl.textContent = (isCumul ? fm+'~'+tm+'월 누계' : tm+'월 당월') + ' | 단위: 백만원 / %';
+  var msCumul = Array.from({length:tm-fm+1},function(_,i){return fm+i;});
+  var msMonth = [tm];
+  if (subEl) subEl.textContent = fm+'~'+tm+'월 | 단위: 백만원 / %';
 
   var BD = 'border-bottom:1px solid #DDE8F2;';
   var BDR = 'border-right:1px solid #DDE8F2;';
@@ -3029,78 +3033,24 @@ function drawChAcctTable() {
                '06. 운반비','07. 선전광고료','08. 용역비','09. 전자상거래지급수수료',
                '10. 마케팅부 판관비','11. 경영지원부 판관비','12. 영업외수익','13. 영업외비용'];
 
-  function getV(yr2, acct) { return _chAcctSum(ch, yr2, acct, ms) / 1000000; }
+  function getV(yr2, acct, ms) { return _chAcctSum(ch, yr2, acct, ms) / 1000000; }
 
-  function calcContrib(yr2) {
-    var s = getV(yr2,'01. 매출액');
-    return s - getV(yr2,'02. 매출원가') - getV(yr2,'03. 지급수수료')
-             - getV(yr2,'04. 시장개척비') - getV(yr2,'05. 시험개발비')
-             - getV(yr2,'06. 운반비') - getV(yr2,'07. 선전광고료')
-             - getV(yr2,'08. 용역비') - getV(yr2,'09. 전자상거래지급수수료');
+  function calcContrib(yr2, ms) {
+    var s = getV(yr2,'01. 매출액',ms);
+    return s - getV(yr2,'02. 매출원가',ms) - getV(yr2,'03. 지급수수료',ms)
+             - getV(yr2,'04. 시장개척비',ms) - getV(yr2,'05. 시험개발비',ms)
+             - getV(yr2,'06. 운반비',ms) - getV(yr2,'07. 선전광고료',ms)
+             - getV(yr2,'08. 용역비',ms) - getV(yr2,'09. 전자상거래지급수수료',ms);
   }
-  function calcNet(yr2) {
-    return calcContrib(yr2) - getV(yr2,'10. 마케팅부 판관비') - getV(yr2,'11. 경영지원부 판관비')
-           + getV(yr2,'12. 영업외수익') - getV(yr2,'13. 영업외비용');
-  }
-
-  function fmtAmt(v) {
-    if (v == null || isNaN(v)) return '-';
-    var neg = v < 0; var abs = Math.abs(v);
-    var s = abs.toFixed(1).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    return neg ? '△'+s : s;
-  }
-  function fmtPct(v, base) {
-    if (!base) return '-';
-    var r = v / base * 100;
-    return (r < 0 ? '△' + Math.abs(r).toFixed(1) : r.toFixed(1)) + '%';
-  }
-  function fmtGrow(v26, v25) {
-    if (!v25) return '-';
-    var r = (v26 - v25) / Math.abs(v25) * 100;
-    return (r < 0 ? '△' + Math.abs(r).toFixed(1) : r.toFixed(1)) + '%';
-  }
-  function fmtDiff(v26, v25) {
-    var d = v26 - v25;
-    return (d < 0 ? '△' : '') + Math.abs(d).toFixed(1).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-  }
-  function colStyle(v26, v25) {
-    var d = v26 - v25;
-    return d > 0 ? 'color:#1565C0;' : (d < 0 ? 'color:#C62828;' : '');
+  function calcNet(yr2, ms) {
+    return calcContrib(yr2, ms)
+      - getV(yr2,'10. 마케팅부 판관비',ms)
+      - getV(yr2,'11. 경영지원부 판관비',ms)
+      + getV(yr2,'12. 영업외수익',ms)
+      - getV(yr2,'13. 영업외비용',ms);
   }
 
-  var thS = 'padding:6px 10px;text-align:right;border-bottom:2px solid #C8D8EA;color:#4D6278;font-size:11px;white-space:nowrap;';
-  var pctS = 'text-align:right;padding:7px 6px;border-bottom:2px solid #C8D8EA;color:#8A9BB0;font-size:10px;width:50px;';
-  var h = '<thead><tr style="background:#F4F8FD;">'
-    + '<th style="text-align:left;padding:7px 12px;border-bottom:2px solid #C8D8EA;'+BDR+'min-width:160px;">구분</th>'
-    + '<th style="'+thS+'">26년</th><th style="'+pctS+'">%</th>'
-    + '<th style="'+thS+'">25년</th><th style="'+pctS+'">%</th>'
-    + '<th style="'+thS+'">증감</th><th style="'+thS+BDR+'">신장율</th>'
-    + '</tr></thead><tbody>';
-
-  var s26 = getV('26','01. 매출액'), s25 = getV('25','01. 매출액');
-
-  function acctRow(label, v26, v25, isBold, isIndent, isSub) {
-    if (isSub) return '';
-    var bg = isBold ? 'background:#EEF5FF;font-weight:700;' : '';
-    var pad = 'padding:6px 12px;';
-    function pct(v) {
-      if (!s26) return '-';
-      var r = v/s26*100;
-      return (r<0?'△':'')+Math.abs(r).toFixed(1)+'%';
-    }
-    var pctCellStyle = 'text-align:right;padding:6px 6px;'+BD+'font-size:10px;color:#8A9BB0;';
-    return '<tr style="'+bg+'"><td style="'+pad+BD+BDR+(isBold?'font-weight:700;':'')+'">'+label+'</td>'
-      + '<td style="text-align:right;padding:6px 10px;'+BD+'">'+fmtAmt(v26)+'</td>'
-      + '<td style="'+pctCellStyle+'">'+pct(v26)+'</td>'
-      + '<td style="text-align:right;padding:6px 10px;'+BD+'color:#8A9BB0;">'+fmtAmt(v25)+'</td>'
-      + '<td style="'+pctCellStyle+'">'+pct(v25)+'</td>'
-      + '<td style="text-align:right;padding:6px 10px;'+BD+colStyle(v26,v25)+'">'+fmtDiff(v26,v25)+'</td>'
-      + '<td style="text-align:right;padding:6px 10px;'+BD+BDR+colStyle(v26,v25)+'">'+fmtGrow(v26,v25)+'</td>'
-      + '</tr>';
-  }
-
-  // 01~09 계정 행
-  function getFeeNote(yr2, ng) {
+  function getFeeNote(yr2, ng, ms) {
     if (typeof FEE_NOTE_DATA === 'undefined' || !FEE_NOTE_DATA[ch]) return 0;
     var chd = FEE_NOTE_DATA[ch]['전체'] || {};
     if (!chd[yr2] || !chd[yr2][ng]) return 0;
@@ -3108,67 +3058,121 @@ function drawChAcctTable() {
     for (var i = 0; i < ms.length; i++) { t += (mon[ms[i]] || 0); }
     return t / 1000000;
   }
+
+  var sC26 = getV('26','01. 매출액',msCumul), sC25 = getV('25','01. 매출액',msCumul);
+  var sM26 = getV('26','01. 매출액',msMonth), sM25 = getV('25','01. 매출액',msMonth);
+
+  var thS  = 'text-align:right;padding:4px 8px;background:#F4F8FD;border-bottom:2px solid #C8D8EA;font-size:10px;color:#4D6278;';
+  var thLS = 'text-align:left;padding:4px 8px;background:#F4F8FD;border-bottom:2px solid #C8D8EA;font-size:10px;color:#4D6278;'+BDR;
+  var pctS = 'text-align:right;padding:4px 4px;background:#F4F8FD;border-bottom:2px solid #C8D8EA;font-size:9px;color:#8A9BB0;';
+  var grpH = 'text-align:center;padding:3px 6px;background:#EAF0FB;border-bottom:1px solid #C8D8EA;font-size:10px;font-weight:700;color:#1B3D6F;';
+
+  var h = '<table style="width:100%;border-collapse:collapse;font-size:11px;font-variant-numeric:tabular-nums;">'
+    + '<thead>'
+    + '<tr>'
+    + '<th style="'+grpH+BDR+'"> </th>'
+    + '<th colspan="5" style="'+grpH+BDR+'">누계 ('+fm+'~'+tm+'월)</th>'
+    + '<th colspan="4" style="'+grpH+'">당월 ('+tm+'월)</th>'
+    + '</tr>'
+    + '<tr>'
+    + '<th style="'+thLS+'">항목</th>'
+    + '<th style="'+thS+'">26년</th><th style="'+pctS+'">%</th>'
+    + '<th style="'+thS+'">25년</th><th style="'+pctS+'">%</th>'
+    + '<th style="'+thS+BDR+'">신장율</th>'
+    + '<th style="'+thS+'">26년</th><th style="'+pctS+'">%</th>'
+    + '<th style="'+thS+'">25년</th><th style="'+pctS+'">%</th>'
+    + '</tr></thead><tbody>';
+
+  function fmtAmtR(v) { return v==null?'-':Math.round(v).toLocaleString(); }
+  function colS(v26,v25){ var d=v26-v25; return d>0?'color:#1a56db;':d<0?'color:#C0392B;':''; }
+  function fmtGrowS(v26,v25){ var b=v25!==0?v25:null; if(!b)return '-'; var r=(v26-v25)/Math.abs(v25)*100; return (r>=0?'▲':'▼')+Math.abs(r).toFixed(1)+'%'; }
+
+  function acctRow(label, cV26, cV25, mV26, mV25, isBold, isSub) {
+    if (isSub) return '';
+    var bg = isBold ? 'background:#EEF5FF;font-weight:700;' : '';
+    var pad = 'padding:5px 10px;';
+    function pctC(v, s) { if (!s) return '-'; var r=v/s*100; return (r<0?'△':'')+Math.abs(r).toFixed(1)+'%'; }
+    var pCS = 'text-align:right;padding:5px 4px;'+BD+'font-size:9px;color:#8A9BB0;';
+    return '<tr style="'+bg+'">'
+      + '<td style="'+pad+BD+BDR+(isBold?'font-weight:700;':'')+'">'+label+'</td>'
+      + '<td style="text-align:right;padding:5px 8px;'+BD+'">'+fmtAmtR(cV26)+'</td>'
+      + '<td style="'+pCS+'">'+pctC(cV26,sC26)+'</td>'
+      + '<td style="text-align:right;padding:5px 8px;'+BD+'color:#8A9BB0;">'+fmtAmtR(cV25)+'</td>'
+      + '<td style="'+pCS+'">'+pctC(cV25,sC25)+'</td>'
+      + '<td style="text-align:right;padding:5px 8px;'+BD+BDR+colS(cV26,cV25)+'">'+fmtGrowS(cV26,cV25)+'</td>'
+      + '<td style="text-align:right;padding:5px 8px;'+BD+'">'+fmtAmtR(mV26)+'</td>'
+      + '<td style="'+pCS+'">'+pctC(mV26,sM26)+'</td>'
+      + '<td style="text-align:right;padding:5px 8px;'+BD+'color:#8A9BB0;">'+fmtAmtR(mV25)+'</td>'
+      + '<td style="'+pCS+'">'+pctC(mV25,sM25)+'</td>'
+      + '</tr>';
+  }
+
   accts.slice(0,9).forEach(function(acct) {
-    var v26 = getV('26', acct), v25 = getV('25', acct);
+    var cV26 = getV('26',acct,msCumul), cV25 = getV('25',acct,msCumul);
+    var mV26 = getV('26',acct,msMonth), mV25 = getV('25',acct,msMonth);
     if (acct === '03. 지급수수료') {
       var exp = chacctS.feeExpanded;
       var expandBtn = '<span onclick="chacctS.feeExpanded=!chacctS.feeExpanded;drawChAcctTable();" '
         + 'style="cursor:pointer;margin-left:6px;font-size:10px;color:#1565C0;">'
         + (exp ? '▲ 접기' : '▼ 펼치기') + '</span>';
-      var bg = 'background:#EEF5FF;'; // slightly highlight
-      var p26=s26?(v26/s26*100):null, p25=s26?(v25/s26*100):null;
-      function fp(r){return r===null?'-':((r<0?'△':'')+Math.abs(r).toFixed(1)+'%');}
-      h += '<tr style="' + bg + '"><td style="padding:6px 12px;border-bottom:1px solid #DDE8F2;border-right:1px solid #DDE8F2;">' + acct + expandBtn + '</td>'
-        + '<td style="text-align:right;padding:6px 10px;border-bottom:1px solid #DDE8F2;">' + fmtAmt(v26) + '</td>'
-        + '<td style="text-align:right;padding:6px 6px;border-bottom:1px solid #DDE8F2;font-size:10px;color:#8A9BB0;">' + fp(p26) + '</td>'
-        + '<td style="text-align:right;padding:6px 10px;border-bottom:1px solid #DDE8F2;color:#8A9BB0;">' + fmtAmt(v25) + '</td>'
-        + '<td style="text-align:right;padding:6px 6px;border-bottom:1px solid #DDE8F2;font-size:10px;color:#8A9BB0;">' + fp(p25) + '</td>'
-        + '<td style="text-align:right;padding:6px 10px;border-bottom:1px solid #DDE8F2;' + colStyle(v26, v25) + '">' + fmtDiff(v26, v25) + '</td>'
-        + '<td style="text-align:right;padding:6px 10px;border-bottom:1px solid #DDE8F2;border-right:1px solid #DDE8F2;' + colStyle(v26, v25) + '">' + fmtGrow(v26, v25) + '</td>'
+      var bg = 'background:#EEF5FF;';
+      var pCS = 'text-align:right;padding:5px 4px;border-bottom:1px solid #DDE8F2;font-size:9px;color:#8A9BB0;';
+      function fp(v,s){ if(!s)return '-'; var r=v/s*100; return (r<0?'△':'')+Math.abs(r).toFixed(1)+'%'; }
+      h += '<tr style="'+bg+'"><td style="padding:5px 10px;border-bottom:1px solid #DDE8F2;border-right:1px solid #DDE8F2;">' + acct + expandBtn + '</td>'
+        + '<td style="text-align:right;padding:5px 8px;border-bottom:1px solid #DDE8F2;">' + fmtAmtR(cV26) + '</td>'
+        + '<td style="'+pCS+'">'+fp(cV26,sC26)+'</td>'
+        + '<td style="text-align:right;padding:5px 8px;border-bottom:1px solid #DDE8F2;color:#8A9BB0;">' + fmtAmtR(cV25) + '</td>'
+        + '<td style="'+pCS+'">'+fp(cV25,sC25)+'</td>'
+        + '<td style="text-align:right;padding:5px 8px;border-bottom:1px solid #DDE8F2;border-right:1px solid #DDE8F2;'+colS(cV26,cV25)+'">'+fmtGrowS(cV26,cV25)+'</td>'
+        + '<td style="text-align:right;padding:5px 8px;border-bottom:1px solid #DDE8F2;">' + fmtAmtR(mV26) + '</td>'
+        + '<td style="'+pCS+'">'+fp(mV26,sM26)+'</td>'
+        + '<td style="text-align:right;padding:5px 8px;border-bottom:1px solid #DDE8F2;color:#8A9BB0;">' + fmtAmtR(mV25) + '</td>'
+        + '<td style="'+pCS+'">'+fp(mV25,sM25)+'</td>'
         + '</tr>';
-      h += acctRow('%', v26, v25, false, true, true);
       if (exp) {
-        var groups = [
-          {key:'판매수수료', label:'판매 수수료'},
-          {key:'물량지원수수료', label:'물량지원 수수료'},
-          {key:'김치인건비보정', label:'김치인건비 보정'},
-          {key:'손익계산서차액보정', label:'손익계산서 차액보정'},
-          {key:'미구분', label:'미구분'}
+        var feeGroups = [
+          {key:'온라인수수료',label:'온라인수수료'},
+          {key:'홈쇼핑수수료',label:'홈쇼핑수수료'},
+          {key:'판촉비',label:'판촉비'},
+          {key:'기타',label:'기타'}
         ];
-        groups.forEach(function(g) {
-          var gv26 = getFeeNote('26', g.key), gv25 = getFeeNote('25', g.key);
-          var subBg = 'background:#F5F8FF;';
-          var gp26=s26?(gv26/s26*100):null, gp25=s26?(gv25/s26*100):null;
-          function gfp(r){return r===null?'-':((r<0?'△':'')+Math.abs(r).toFixed(1)+'%');}
-          h += '<tr style="' + subBg + '"><td style="padding:4px 12px 4px 28px;border-bottom:1px solid #EEF3FA;border-right:1px solid #DDE8F2;font-size:11px;color:#4D6278;">└ ' + g.label + '</td>'
-            + '<td style="text-align:right;padding:4px 10px;border-bottom:1px solid #EEF3FA;font-size:11px;">' + fmtAmt(gv26) + '</td>'
-            + '<td style="text-align:right;padding:4px 6px;border-bottom:1px solid #EEF3FA;font-size:10px;color:#8A9BB0;">' + gfp(gp26) + '</td>'
-            + '<td style="text-align:right;padding:4px 10px;border-bottom:1px solid #EEF3FA;color:#8A9BB0;font-size:11px;">' + fmtAmt(gv25) + '</td>'
-            + '<td style="text-align:right;padding:4px 6px;border-bottom:1px solid #EEF3FA;font-size:10px;color:#8A9BB0;">' + gfp(gp25) + '</td>'
-            + '<td style="text-align:right;padding:4px 10px;border-bottom:1px solid #EEF3FA;font-size:11px;' + colStyle(gv26, gv25) + '">' + fmtDiff(gv26, gv25) + '</td>'
-            + '<td style="text-align:right;padding:4px 10px;border-bottom:1px solid #EEF3FA;border-right:1px solid #DDE8F2;font-size:11px;' + colStyle(gv26, gv25) + '">' + fmtGrow(gv26, gv25) + '</td>'
+        var subBg = 'background:#F7FAFF;';
+        feeGroups.forEach(function(g) {
+          var gcV26 = getFeeNote('26',g.key,msCumul), gcV25 = getFeeNote('25',g.key,msCumul);
+          var gmV26 = getFeeNote('26',g.key,msMonth), gmV25 = getFeeNote('25',g.key,msMonth);
+          var gPC = 'text-align:right;padding:4px 4px;border-bottom:1px solid #EEF3FA;font-size:9px;color:#8A9BB0;';
+          h += '<tr style="'+subBg+'"><td style="padding:4px 10px 4px 24px;border-bottom:1px solid #EEF3FA;border-right:1px solid #DDE8F2;font-size:11px;color:#4D6278;">└ '+g.label+'</td>'
+            + '<td style="text-align:right;padding:4px 8px;border-bottom:1px solid #EEF3FA;font-size:11px;">'+fmtAmtR(gcV26)+'</td>'
+            + '<td style="'+gPC+'">'+fp(gcV26,sC26)+'</td>'
+            + '<td style="text-align:right;padding:4px 8px;border-bottom:1px solid #EEF3FA;color:#8A9BB0;font-size:11px;">'+fmtAmtR(gcV25)+'</td>'
+            + '<td style="'+gPC+'">'+fp(gcV25,sC25)+'</td>'
+            + '<td style="text-align:right;padding:4px 8px;border-bottom:1px solid #EEF3FA;border-right:1px solid #DDE8F2;font-size:11px;'+colS(gcV26,gcV25)+'">'+fmtGrowS(gcV26,gcV25)+'</td>'
+            + '<td style="text-align:right;padding:4px 8px;border-bottom:1px solid #EEF3FA;font-size:11px;">'+fmtAmtR(gmV26)+'</td>'
+            + '<td style="'+gPC+'">'+fp(gmV26,sM26)+'</td>'
+            + '<td style="text-align:right;padding:4px 8px;border-bottom:1px solid #EEF3FA;color:#8A9BB0;font-size:11px;">'+fmtAmtR(gmV25)+'</td>'
+            + '<td style="'+gPC+'">'+fp(gmV25,sM25)+'</td>'
             + '</tr>';
         });
       }
-    } else {
-      h += acctRow(acct, v26, v25, false, false, false);
-      h += acctRow('%', v26, v25, false, true, true);
+      return;
     }
+    h += acctRow(acct, cV26, cV25, mV26, mV25, false, false);
   });
-  // 공헌이익
-  var c26 = calcContrib('26'), c25 = calcContrib('25');
-  h += acctRow('공헌이익', c26, c25, true, false, false);
-  h += acctRow('%', c26, c25, false, true, true);
-  // 10~13
+
+  var kC26 = calcContrib('26',msCumul), kC25 = calcContrib('25',msCumul);
+  var kM26 = calcContrib('26',msMonth), kM25 = calcContrib('25',msMonth);
+  h += acctRow('공헌이익', kC26, kC25, kM26, kM25, true, false);
+  h += acctRow('%', kC26/sC26*100, kC25/sC25*100, kM26/sM26*100, kM25/sM25*100, false, true);
+
   accts.slice(9).forEach(function(acct) {
-    var v26 = getV('26', acct), v25 = getV('25', acct);
-    h += acctRow(acct, v26, v25, false, false, false);
-    h += acctRow('%', v26, v25, false, true, true);
+    var cV26 = getV('26',acct,msCumul), cV25 = getV('25',acct,msCumul);
+    var mV26 = getV('26',acct,msMonth), mV25 = getV('25',acct,msMonth);
+    h += acctRow(acct, cV26, cV25, mV26, mV25, false, false);
   });
-  // 당기순이익
-  var n26 = calcNet('26'), n25 = calcNet('25');
-  h += acctRow('당기순이익', n26, n25, true, false, false);
-  h += acctRow('%', n26, n25, false, true, true);
+
+  var nC26 = calcNet('26',msCumul), nC25 = calcNet('25',msCumul);
+  var nM26 = calcNet('26',msMonth), nM25 = calcNet('25',msMonth);
+  h += acctRow('당기순이익', nC26, nC25, nM26, nM25, true, false);
 
   h += '</tbody>';
   if (tableEl) tableEl.innerHTML = h;
@@ -3795,6 +3799,12 @@ function _drawProdchTable() {
       var colSt = isBdr ? bdr : '';
       var s26 = chS(ch,'26'); var s25 = chS(ch,'25');
       var cc26 = chC(ch,'26'); var cc25 = chC(ch,'25');
+      if (kimchiExclMode && prodName === '포장김치') {
+        var _exclCh = ch === '__total__'
+          ? chKeys.reduce(function(t,cc){ return t+_kimchiExclCh(cc,'26',ms); },0)
+          : _kimchiExclCh(ch,'26',ms);
+        cc26 -= _exclCh / 1;
+      }
       var totS26ch = chS('__total__','26');
       var totS25ch = chS('__total__','25');
 
