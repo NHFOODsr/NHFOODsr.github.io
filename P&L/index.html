@@ -1533,7 +1533,7 @@ function renderMonthlyTable(data, currYr, prevYr, fromM, toM, selChs) {
   function _mthProfit(accts, yr2, ms) {
     var base = calcContrib(accts);
     const msArr = Array.isArray(ms) ? ms : [ms];
-    if (kimchiExclMode) base -= _kimchiExclAmt('전체', yr2, msArr);
+    if (kimchiExclMode) base += _kimchiExclAmt('전체', yr2, msArr);
     if (!isNet) return base;
     return base - _sumAD('전체',yr2,'10. 마케팅부 판관비',msArr) - _sumAD('전체',yr2,'11. 경영지원부 판관비',msArr) + _sumAD('전체',yr2,'12. 영업외수익',msArr) - _sumAD('전체',yr2,'13. 영업외비용',msArr);
   }
@@ -1838,7 +1838,7 @@ function _sumCH(ch, d1filter, yr2, ms) {
     const yrmap=(chData[d1]||{})[yr2]||{};
     for(const m of ms){const mc=yrmap[String(m)];if(mc){s+=mc[0];c+=mc[1];}}
   }
-  if (kimchiExclMode && yr2 === '26') c -= _kimchiExclCh(ch, yr2, ms);
+  if (kimchiExclMode && yr2 === '26') c += _kimchiExclCh(ch, yr2, ms);
   return [s,c];
 }
 
@@ -2060,7 +2060,7 @@ function _sumSC(yr, ms, prod, d1filter) {
   // 포장김치 김치교지비: 버튼 ON 시 공헌이익에서 교지비 차감
   if (kimchiExclMode && prod === '포장김치') {
     var exclD1 = (d1filter === '전체') ? '전체' : d1filter;
-    c -= _kimchiExclAmt(exclD1, yr, ms);
+    c += _kimchiExclAmt(exclD1, yr, ms);
   }
   return [s, c];
 }
@@ -3060,9 +3060,9 @@ function drawChAcctTable() {
   var sC26 = getV('26','01. 매출액',msCumul), sC25 = getV('25','01. 매출액',msCumul);
   var sM26 = getV('26','01. 매출액',msMonth), sM25 = getV('25','01. 매출액',msMonth);
 
-  var thS  = 'text-align:right;padding:4px 8px;background:#F4F8FD;border-bottom:2px solid #C8D8EA;font-size:10px;color:#4D6278;';
-  var thLS = 'text-align:left;padding:4px 8px;background:#F4F8FD;border-bottom:2px solid #C8D8EA;font-size:10px;color:#4D6278;width:120px;'+BDR;
-  var pctS = 'text-align:right;padding:4px 4px;background:#F4F8FD;border-bottom:2px solid #C8D8EA;font-size:9px;color:#8A9BB0;';
+  var thS  = 'text-align:right;padding:4px 5px;background:#F4F8FD;border-bottom:2px solid #C8D8EA;font-size:10px;color:#4D6278;width:68px;';
+  var thLS = 'text-align:left;padding:4px 6px;background:#F4F8FD;border-bottom:2px solid #C8D8EA;font-size:10px;color:#4D6278;width:80px;white-space:nowrap;'+BDR;
+  var pctS = 'text-align:right;padding:4px 2px;background:#F4F8FD;border-bottom:2px solid #C8D8EA;font-size:9px;color:#8A9BB0;width:38px;';
   var grpH = 'text-align:center;padding:3px 6px;background:#EAF0FB;border-bottom:1px solid #C8D8EA;font-size:10px;font-weight:700;color:#1B3D6F;';
 
   var h = '<table style="width:100%;border-collapse:collapse;font-size:11px;font-variant-numeric:tabular-nums;table-layout:fixed;">'
@@ -3088,7 +3088,7 @@ function drawChAcctTable() {
   function acctRow(label, cV26, cV25, mV26, mV25, isBold, isSub) {
     if (isSub) return '';
     var bg = isBold ? 'background:#EEF5FF;font-weight:700;' : '';
-    var pad = 'padding:5px 10px;';
+    var pad = 'padding:5px 6px;';
     function pctC(v, s) { if (!s) return '-'; var r=v/s*100; return (r<0?'△':'')+Math.abs(r).toFixed(1)+'%'; }
     var pCS = 'text-align:right;padding:5px 4px;'+BD+'font-size:9px;color:#8A9BB0;';
     return '<tr style="'+bg+'">'
@@ -3772,19 +3772,19 @@ function _drawProdchTable() {
     {key:'cogs',  label:'매출원가', indent:1},
     {key:'rate_cogs', label:'원가율', indent:1, isPct:true},
     {key:'sf',    label:'판매경비', indent:1, isGrp:true},
-    {key:'03. 지급수수료',          label:'지급수수료',         indent:2},
-    {key:'04. 시장개척비',          label:'시장개척비',         indent:2},
-    {key:'05. 시험개발비',          label:'시험개발비',         indent:2},
-    {key:'06. 운반비',              label:'운반비',             indent:2},
-    {key:'07. 선전광고료',          label:'선전광고료',         indent:2},
-    {key:'08. 용역비',              label:'용역비',             indent:2},
-    {key:'09. 전자상거래지급수수료', label:'전자상거래지급수수료', indent:2},
+    {key:'03. 지급수수료',          label:'지급수수료',         indent:2, isAcctPct:true},
+    {key:'04. 시장개척비',          label:'시장개척비',         indent:2, isAcctPct:true},
+    {key:'05. 시험개발비',          label:'시험개발비',         indent:2, isAcctPct:true},
+    {key:'06. 운반비',              label:'운반비',             indent:2, isAcctPct:true},
+    {key:'07. 선전광고료',          label:'선전광고료',         indent:2, isAcctPct:true},
+    {key:'08. 용역비',              label:'용역비',             indent:2, isAcctPct:true},
+    {key:'09. 전자상거래지급수수료', label:'전자상거래지급수수료', indent:2, isAcctPct:true},
     {key:'contrib',      label:'공헌이익', indent:0, bold:true, isAmtDiff:true},
     {key:'rate_contrib', label:'공헌이익율', indent:0, isPct:true, bold:true},
-    {key:'mk',    label:'마케팅부 판관비',   indent:1},
-    {key:'mg',    label:'경영지원부 판관비', indent:1},
-    {key:'oi',    label:'영업외수익', indent:1},
-    {key:'oe',    label:'영업외비용', indent:1},
+    {key:'mk',    label:'마케팅부 판관비',   indent:1, isAcctPct:true},
+    {key:'mg',    label:'경영지원부 판관비', indent:1, isAcctPct:true},
+    {key:'oi',    label:'영업외수익', indent:1, isAcctPct:true},
+    {key:'oe',    label:'영업외비용', indent:1, isAcctPct:true},
     {key:'net',   label:'당기순이익', indent:0, bold:true, isAmtDiff:true},
     {key:'rate_net', label:'당기순이익율', indent:0, isPct:true, bold:true}
   ];
@@ -3804,7 +3804,7 @@ function _drawProdchTable() {
         var _exclCh = ch === '__total__'
           ? chKeys.reduce(function(t,cc){ return t+_kimchiExclCh(cc,'26',ms); },0)
           : _kimchiExclCh(ch,'26',ms);
-        cc26 -= _exclCh / 1;
+        cc26 += _exclCh;
       }
       var totS26ch = chS('__total__','26');
       var totS25ch = chS('__total__','25');
