@@ -180,6 +180,13 @@ main { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
   white-space: nowrap;
 }
 .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); }
+.tab-btn.tab-ch { color: #4D6278; }
+.tab-btn.tab-ch:hover { color: #1565C0; background: #F0F5FF; border-radius: 4px 4px 0 0; }
+.tab-btn.tab-ch.active { color: #1565C0; border-bottom-color: #1565C0; }
+.tab-btn.tab-item { color: #4D6278; }
+.tab-btn.tab-item:hover { color: #2E7D32; background: #F1F8F2; border-radius: 4px 4px 0 0; }
+.tab-btn.tab-item.active { color: #2E7D32; border-bottom-color: #2E7D32; }
+.tab-sep { width: 1px; background: var(--border); margin: 6px 4px; align-self: stretch; flex-shrink: 0; }
 .tab-panel { display: none; flex: 1; overflow-y: auto; padding: 14px 16px; flex-direction: column; gap: 10px; min-height: 0; }
 .tab-panel.active { display: flex; }
 
@@ -432,11 +439,13 @@ tfoot td { font-weight: 700; background: #F4F8FD; border-top: 1px solid var(--bo
     <div class="tab-bar">
       <button class="tab-btn active" onclick="switchTab('dashboard')">📊 대시보드</button>
       <button class="tab-btn" onclick="switchTab('monthly')">📅 월별 상세분석</button>
-      <button class="tab-btn" onclick="switchTab('channel')">🏪 채널별 상세분석</button>
-      <button class="tab-btn" onclick="switchTab('chacct')">📋 채널별 상세(계정)</button>
-      <button class="tab-btn" onclick="switchTab('chprod')">🔀 채널별 품목별</button>
-      <button class="tab-btn" onclick="switchTab('item')">📊 품목별 상세분석</button>
-      <button class="tab-btn" onclick="switchTab('prodch')">📦 품목별 채널별</button>
+      <div class="tab-sep"></div>
+      <button class="tab-btn tab-ch" onclick="switchTab('channel')">🏢 채널별 상세분석</button>
+      <button class="tab-btn tab-ch" onclick="switchTab('chacct')">🏢 채널별 상세(계정)</button>
+      <button class="tab-btn tab-ch" onclick="switchTab('chprod')">🏢 채널별 품목별</button>
+      <div class="tab-sep"></div>
+      <button class="tab-btn tab-item" onclick="switchTab('item')">📦 품목별 상세분석</button>
+      <button class="tab-btn tab-item" onclick="switchTab('prodch')">📦 품목별 채널별</button>
     </div>
 
     <!-- 대시보드 탭 -->
@@ -3358,7 +3367,7 @@ function drawChProdTable() {
   function fmtA(v) {
     if (v == null || isNaN(v)) return '-';
     var neg = v < 0; var abs = Math.abs(v);
-    return (neg?'△':'')+abs.toFixed(1).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+    return (neg?'△':'')+Math.round(abs).toLocaleString();
   }
   function colS(d) { return d>0?'color:#1565C0;':(d<0?'color:#C62828;':''); }
 
