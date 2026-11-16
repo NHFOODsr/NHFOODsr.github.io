@@ -1812,6 +1812,9 @@ function toggleKimchiExcl() {
   if (activeTab) {
     if (activeTab === 'prodch' && prodchS && prodchS.prod) _showProdchOverlay();
     switchTab(activeTab);
+    if (activeTab === 'item' && prodChS && prodChS.prod) {
+      setTimeout(function(){ _drawProdChPanel(); }, 50);
+    }
   }
 }
 
@@ -2740,8 +2743,14 @@ function _drawProdChPanel() {
   rowDefs.forEach(({label, isTotal}) => {
     const s26 = isTotal?getTotalS('26'):getS(label,'26');
     const s25 = isTotal?getTotalS('25'):getS(label,'25');
-    const c26 = isTotal?getTotalC('26'):getC(label,'26');
-    const c25 = isTotal?getTotalC('25'):getC(label,'25');
+    let c26 = isTotal?getTotalC('26'):getC(label,'26');
+    let c25 = isTotal?getTotalC('25'):getC(label,'25');
+    if (kimchiExclMode && prodName === '포장김치') {
+      var _exc26 = isTotal
+        ? chKeys.reduce(function(t,cc){ return t+_kimchiExclCh(cc,'26',ms); }, 0)
+        : _kimchiExclCh(label,'26',ms);
+      c26 += _exc26;
+    }
     const n26=c26, n25=c25;
     const cr26=s26?c26/s26:null, cr25=s25?c25/s25:null;
     const nr26=s26?n26/s26:null, nr25=s25?n25/s25:null;
